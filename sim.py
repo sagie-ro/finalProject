@@ -76,3 +76,5 @@ q6 = order Q* +mean demand
 q7 = order Q* - mean demand
 '''
 
+'this was from my branch have a looksi that you see what i have changed :)'
+
