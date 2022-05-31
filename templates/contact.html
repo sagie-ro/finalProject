@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect Us</title>
+    <link rel="icon" href="../static/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Averia+Sans+Libre:wght@700&family=Martel+Sans:wght@600&family=Ruluko&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/styleZen.css">
+    <script src="../static/ZenJS.js"></script>
+</head>
+<body>
+    <div class="grid-container form-grid">
+        <header>
+            <img class="logo" src="../static/x-diamond-fill.png" alt="logo"/>
+            <h1 class="pinkWord logoText">OWLCOME</h1>
+        </header>
+        <nav>
+            <div id="navLinks">
+                <a href="javascript:void(0);" class="icon" onclick="openMenu()">
+                    <img class="hamburg" src="../static/hamburg.png" alt="hamburger"/>
+                </a>
+                <a id="Home" href="home.html" class="navL">Home</a>
+                <a id="Connect_Us" href="contact.html" class="navL">Connect Us</a>
+            </div>
+        </nav>
+        <article class="contactUsPhrase">
+            <h1>Let’s connect through your inner owl</h1>
+            <h2>Please tell us about yourself so that we can help you find your hidden inner owl. This information will help us guide you on your journey to discover your inner owl.</h2>
+        </article>
+        <article class="formArticle">
+            <form action="/home.html" method="POST" class="inner-form-grid">
+                <div id="input1">
+                    <label for="fname">First name</label><br>
+                    <input type="text" id="fname" name="fname" class="formInput">
+                </div>
+                <div id="input2">
+                    <label for="lname">Last name</label><br>
+                    <input type="text" id="lname" name="lname" class="formInput">
+                </div>
+                <div id="input3">
+                    <label for="phone">Phone Number</label><br>
+                    <input type="tel" id="phone" name="phone" class="formInput">
+                </div>
+                <div id="input4">
+                    <label for="birth">Birth Date</label><br>
+                    <input type="date" id="birth" name="birth" class="formInput">
+                </div>
+                <div id="input5">
+                    <label for="email" >Email Address</label><br>
+                    <input required type="email" id="email" name="email" class="formInput">
+                </div>
+                <div id="input6">
+                    <label for="aboutyou">Please provide any information that will help us get to know you better</label><br>
+                    <textarea required rows="10" id="aboutyou" name="aboutyou" class="formInput"></textarea>
+                </div>
+                <div id="input7">
+                    <input type="checkbox" id="agree" name="agree" class="checkBox">
+                    <label for="agree">Upon submitting this form, you are agreeing to all stages of your journey. </label>
+                </div>
+                <input id="input8" type="submit" value="Release your inner owl" class="submitButton">
+            </form>
+        </article>
+    </div>
+
+</body>
+</html>

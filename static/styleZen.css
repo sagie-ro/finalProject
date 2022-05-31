@@ -1,0 +1,394 @@
+:root{
+    --bcolor: #fedcc5;
+    --pink: #FF5F6D;
+    --innerInput: #FDF7F4;
+    --choosen: #fceee5;
+    --choosenTxt: #86242c;
+    --font1: 'Averia Sans Libre', cursive;
+    --font2: 'Ruluko', sans-serif;
+    --font3: 'Martel Sans', sans-serif;
+    --bStyle: 2px solid #D9B1A3;
+}
+
+body{
+    padding: 0;
+    margin: 0;
+    background-color: var(--bcolor);
+    background-image: url("../static/Repeat Grid 1.png");
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    overflow-x: hidden;
+}
+
+header{
+    grid-area: header;
+    display: inline-block;
+}
+
+.logo{
+    width: 24px;
+    height: 24px;
+}
+
+.logoText{
+    margin-left:0.75vw;
+    color: var(--pink);
+    cursor: default;
+    font-size: 24px;
+}
+
+aside{
+    padding-top: 12vh;
+    grid-area: aside;
+}
+
+aside span{
+    font-family: var(--font1);
+    font-size: 5vw;
+    text-transform: uppercase;
+    line-height: 5.5vw;
+    cursor: default;
+}
+
+.pinkWord{
+    color: var(--pink);
+    display: inline;
+}
+
+button{
+    margin-top:6vh;
+    background: white;
+    border: none;
+    cursor: pointer;
+    outline: inherit;
+    height: 11.2vh;
+    width:28.365vw;
+    border-radius: 5vw;
+    box-shadow: 0 3px 6px rgba(124, 28, 36, 0.16);
+}
+
+button span{
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-family: var(--font1);
+    color: var(--pink);
+    font-size: 2vw;
+}
+
+figure{
+    float:right;
+    margin: 0 10vw 0 0;
+    grid-area: figure;
+    animation-name: floater;
+    animation-duration: 6s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes floater {
+    0%   {margin-top: 4vh;}
+    20%  {margin-top: 0;}
+    60%  {margin-top: 8vh;}
+    85%  {margin-top: 0;}
+    100%  {margin-top: 4vh;}
+}
+
+figure img{
+    height: 80vh;
+    width: 46vw;
+}
+
+.contactUsPhrase{
+    padding-top: 4vh;
+    grid-area: contactUsPhrase;
+    margin-right: 12.7vw;
+}
+
+h1{
+    margin: 0;
+    font-family: var(--font1);
+    font-size: 36px;
+    cursor: default;
+}
+
+h2{
+    margin: 2vh 0 0 0 ;
+    font-family: var(--font2);
+    font-size: 24px;
+    cursor: default;
+}
+
+nav a{
+    margin: 0 2vw 0 0;
+    font-family: var(--font1);
+    font-size: 22px;
+    display: inline-block;
+    color: var(--pink);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.formArticle{
+    margin-top: 6vh ;
+    grid-area: formArticle;
+}
+
+form{
+    font-family: var(--font3);
+    margin: 0 auto;
+    position: relative;
+}
+
+form div{
+    display: inline-block;
+}
+
+input{
+    height: 32px;
+}
+
+.formInput{
+    display: block;
+    border: var(--bStyle);
+    font-size: 16px;
+    border-radius: 10px;
+    background-color: var(--innerInput);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+textarea{
+    resize: none;
+}
+
+.checkBox{
+    vertical-align: middle;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    background-color: var(--bcolor);
+    display: inline;
+}
+
+label{
+    vertical-align: middle;
+}
+
+.submitButton{
+    color: var(--pink);
+    font-size: 2vw;
+    font-family: 'Averia Sans Libre', cursive;
+    text-transform: uppercase;
+    margin-top:4vh;
+    margin-bottom:4vh;
+    background: white;
+    border: none;
+    cursor: pointer;
+    outline: inherit;
+    height: 11.2vh;
+    width:74.6vw;
+    border-radius: 5vw;
+    box-shadow: 0 3px 6px rgba(124, 28, 36, 0.16);
+}
+
+nav{
+    grid-area: nav;
+    padding-top: calc(24px - 22px);
+}
+
+a *{
+    cursor: pointer;
+}
+
+.grid-container{
+    display: grid;
+    padding-left: 12.7vw;
+    padding-top: 3.33vh;
+}
+
+.home-grid{
+    grid-template-columns: 40% auto;
+    grid-template-areas: 'header nav'
+    'aside figure';
+}
+
+.form-grid{
+    grid-template-columns: 40% auto;
+    grid-template-areas: 'header nav'
+    'contactUsPhrase contactUsPhrase'
+    'formArticle formArticle';
+}
+
+.hamburg{
+    display: none;
+    width: 22px;
+    height: 22px;
+}
+
+.chosen{
+    color: var(--choosenTxt);
+    text-decoration: underline;
+}
+
+#input1{
+    grid-area: input1;
+}
+#input2{
+    grid-area: input2;
+}
+#input3{
+    grid-area: input3;
+}
+#input4{
+    grid-area: input4;
+}
+#input5{
+    grid-area: input5;
+}
+#input6{
+    grid-area: input6;
+}
+#input7{
+    grid-area: input7;
+}
+#input8{
+    grid-area: input8;
+}
+
+.inner-form-grid{
+    display: grid;
+    margin-right: 12.7vw;
+    grid-template-columns: 47.5% auto;
+    row-gap: 2vh;
+    column-gap: 5vw;
+    grid-template-areas: 'input1 input2'
+    'input3 input4'
+    'input5 input5'
+    'input6 input6'
+    'input7 input7'
+    'input8 input8';
+}
+
+.navL:hover{
+    color: var(--choosenTxt);
+}
+
+@media only screen and (max-width: 768px) {
+    .hamburg {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+    }
+
+    .home-grid {
+        grid-template-columns: 9.5% auto;
+        column-gap: 3vw;
+        grid-template-areas: 'nav header'
+        'aside aside'
+        'figure figure';
+    }
+
+    figure{
+        text-align: center;
+    }
+
+    figure img{
+    height: 38vh;
+    margin: 2vh 10vw;
+    object-fit: fill;
+    }
+
+    .no_y{
+        overflow-y: hidden;
+    }
+
+    .form-grid {
+        grid-template-columns: 9.5% auto;
+        column-gap: 3vw;
+        grid-template-areas: 'nav header'
+        'contactUsPhrase contactUsPhrase'
+        'formArticle formArticle';
+    }
+
+    aside {
+        padding-top: 4vh;
+        margin-right: 12.7vw;
+        text-align: center;
+    }
+
+    aside > span {
+        text-transform: uppercase;
+        font-size: 7vw;
+        line-height: 8vw;
+        text-align: center;
+    }
+
+    #navLinks {
+        display: block;
+        background-color: var(--bcolor);
+
+    }
+
+    .navL {
+        padding-left: 2vw;
+        background-color: var(--bcolor);
+        width: 76.6vw;
+        padding-top: 0.5vh;
+        padding-bottom: 1vh;
+        display: none;
+    }
+
+    .navL:hover {
+        background-color: var(--innerInput);
+        width: 74.6vw;
+        padding-left: 4vw;
+    }
+
+    .chosen {
+        padding-left: 4vw;
+        width: 74.6vw;
+        background-color: var(--choosen);
+    }
+
+    .icon {
+        background-color: var(--bcolor);
+        padding-left: 2vw;
+    }
+
+    button {
+        height: 10vh;
+        width: 40vw;
+        border-radius: 60px;
+    }
+
+    button span {
+        font-size: 16px;
+    }
+
+    .contactUsPhrase {
+        text-align: center;
+    }
+
+    .inner-form-grid {
+        display: grid;
+        margin-right: 12.7vw;
+        grid-template-columns: 100%;
+        row-gap: 3vh;
+        grid-template-areas: 'input1'
+        'input2'
+        'input3'
+        'input4'
+        'input5'
+        'input6'
+        'input7'
+        'input8';
+    }
+
+    .submitButton {
+        font-size: 16px;
+        height: 10vh;
+        border-radius: 60px;
+    }
+}
