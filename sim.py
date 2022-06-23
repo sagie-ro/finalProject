@@ -30,7 +30,8 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, LT = 0, rop=0):
     :return: Q_list: list of Q [float[]]
     '''
     Q_list = []
-    Q_list.append(eoq.calc_eoq_1(k, mean, h))
+    min_Q = LT*mean
+    Q_list.append(eoq.calc_eoq_1(k, mean, h, min_Q))
 
     if 1 in heuristic_list:  # calculate average Demand and multiply with LT
         Q_list.append((sum(demand_list) / len(demand_list)) * LT)
@@ -127,7 +128,7 @@ def sim_runner(demandArr, Q, rop, LT, h, k, c, p, b):
             daysToNewSupply = LT
 
         # calc the cost
-        inventory_cost = ES * h
+        inventory_cost = ES * h/365
         if (daysToNewSupply == LT or i == 0 ):
             order_cost = k
             item_cost = Q * c
@@ -170,65 +171,11 @@ def sim_runner(demandArr, Q, rop, LT, h, k, c, p, b):
     return simDf, summary_list, cumsum
 
 
-create_sim(mean=2, sigma=0.5, LT=1
-          ,k=1000, c=150,  interest=0.1, h=15
+create_sim(mean=1000, sigma=120, LT=20
+          ,k=1000, c=150,  interest=0.1, h=150*0.1
           ,alpha=0.95, p=200, distFunc="normal"
           ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean2_sig05_lt1_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
-
-create_sim(mean=10, sigma=1, LT=1
-          ,k=1000, c=150,  interest=0.1, h=15
-          ,alpha=0.95, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean10_sig1_lt1_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
-
-create_sim(mean=2, sigma=0.5, LT=1
-          ,k=500, c=100,  interest=0.1, h=15
-          ,alpha=0.95, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean2_sig05_lt1_k500_c100_int01_h15_alpha095_p200_norm.xlsx')
-
-create_sim(mean=2, sigma=0.5, LT=1
-          ,k=1000, c=150,  interest=0.1, h=15
-          ,alpha=0.90, p=100, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean2_sig05_lt1_k1000_c150_int01_h15_alpha090_p100_norm.xlsx')
-
-create_sim(mean=10, sigma=1, LT=10
-          ,k=1000, c=150,  interest=0.1, h=15
-          ,alpha=0.95, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean10_sig1_lt10_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
-
-create_sim(mean=2, sigma=0.5, LT=1
-          ,k=1000, c=20,  interest=0.01, h=15
-          ,alpha=0.95, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean2_sig05_lt1_k1000_c20_int001_h15_alpha095_p200_norm.xlsx')
-
-create_sim(mean=2, sigma=0.5, LT=1
-          ,k=200, c=300,  interest=0.1, h=30
-          ,alpha=0.95, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean2_sig05_lt1_k200_c30_int01_h30_alpha095_p200_norm.xlsx')
-
-create_sim(mean=50, sigma=7, LT=5
-          ,k=1000, c=150,  interest=0.1, h=15
-          ,alpha=0.85, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean50_sig7_lt5_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
-
-create_sim(mean=2, sigma=0.5, LT=1
-          ,k=10000, c=500,  interest=0.1, h=50
-          ,alpha=0.95, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean2_sig05_lt1_k10000_c500_int01_h50_alpha095_p200_norm.xlsx')
-
-create_sim(mean=20, sigma=5, LT=10
-          ,k=10000, c=1500,  interest=1, h=150
-          ,alpha=0.99, p=2000, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res_mean20_sig5_lt10_k10000_c1500_int1_h150_alpha099_p2000_norm.xlsx')
+          ,FileName='res.xlsx')
 
 
 
