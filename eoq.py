@@ -7,4 +7,4 @@ def calc_eoq_1(k, mean, h):
     :param h: inventory cost per unit per year
     :return: Optimal q (float)
     '''
-    return (2*k*mean*365/h)**0.5
+    return (2*k*mean/h)**0.5

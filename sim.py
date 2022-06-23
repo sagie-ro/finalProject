@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import designer as design
 import xlsxwriter
 import eoq
+import math
 
 
 def norm_calc_rop(alpha, LT, sigma, mean):
@@ -55,15 +56,16 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, LT = 0, rop=0):
     return Q_list
 
 
-def create_sim(mean, sigma, LT, k, c, interest, alpha, p, distFunc="normal", q_list=[0]):
+def create_sim(mean, sigma, LT, k, c, interest, alpha, p,h=0, distFunc="normal", q_list=[0], FileName='res.xlsx'):
     # calc rop
     if distFunc == "normal":
         z, b, rop = norm_calc_rop(alpha, LT, sigma, mean)
-    h = interest * c
+    if h==0:
+        h = (interest * c)
 
     demandArr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
     Q_list = create_heuristic_q(demandArr, q_list, k, mean, h, LT, rop)
-    Q_list = [int(item) for item in Q_list]
+    Q_list = [math.ceil(item) for item in Q_list]
 
     simDf = []
     summary_list = []
@@ -75,12 +77,12 @@ def create_sim(mean, sigma, LT, k, c, interest, alpha, p, distFunc="normal", q_l
         summary_list.append(sl)
         cumsum.append(cc)
 
-    save_to_excel(simDf, summary_list, cumsum)
+    save_to_excel(simDf, summary_list, cumsum,FileName)
 
 
-def save_to_excel(simDf, summary_list, cumsum):
+def save_to_excel(simDf, summary_list, cumsum, FileName = 'res.xlsx'):
     # save the result to exel
-    writer = pd.ExcelWriter('res.xlsx', engine='xlsxwriter', options={'in_memory': True})
+    writer = pd.ExcelWriter(FileName, engine='xlsxwriter', options={'in_memory': True})
 
     merge = pd.concat(summary_list)
     merge = merge.reset_index(drop=True)
@@ -168,9 +170,70 @@ def sim_runner(demandArr, Q, rop, LT, h, k, c, p, b):
     return simDf, summary_list, cumsum
 
 
-create_sim(mean=10, sigma=10, LT=3
-           , k=100, c=100, interest=0.1,
-           alpha=0.99, p=150, distFunc="normal", q_list=[0, 1, 2, 3, 4, 5, 6, 7])
+create_sim(mean=2, sigma=0.5, LT=1
+          ,k=1000, c=150,  interest=0.1, h=15
+          ,alpha=0.95, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean2_sig05_lt1_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
+
+create_sim(mean=10, sigma=1, LT=1
+          ,k=1000, c=150,  interest=0.1, h=15
+          ,alpha=0.95, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean10_sig1_lt1_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
+
+create_sim(mean=2, sigma=0.5, LT=1
+          ,k=500, c=100,  interest=0.1, h=15
+          ,alpha=0.95, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean2_sig05_lt1_k500_c100_int01_h15_alpha095_p200_norm.xlsx')
+
+create_sim(mean=2, sigma=0.5, LT=1
+          ,k=1000, c=150,  interest=0.1, h=15
+          ,alpha=0.90, p=100, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean2_sig05_lt1_k1000_c150_int01_h15_alpha090_p100_norm.xlsx')
+
+create_sim(mean=10, sigma=1, LT=10
+          ,k=1000, c=150,  interest=0.1, h=15
+          ,alpha=0.95, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean10_sig1_lt10_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
+
+create_sim(mean=2, sigma=0.5, LT=1
+          ,k=1000, c=20,  interest=0.01, h=15
+          ,alpha=0.95, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean2_sig05_lt1_k1000_c20_int001_h15_alpha095_p200_norm.xlsx')
+
+create_sim(mean=2, sigma=0.5, LT=1
+          ,k=200, c=300,  interest=0.1, h=30
+          ,alpha=0.95, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean2_sig05_lt1_k200_c30_int01_h30_alpha095_p200_norm.xlsx')
+
+create_sim(mean=50, sigma=7, LT=5
+          ,k=1000, c=150,  interest=0.1, h=15
+          ,alpha=0.85, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean50_sig7_lt5_k1000_c150_int01_h15_alpha095_p200_norm.xlsx')
+
+create_sim(mean=2, sigma=0.5, LT=1
+          ,k=10000, c=500,  interest=0.1, h=50
+          ,alpha=0.95, p=200, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean2_sig05_lt1_k10000_c500_int01_h50_alpha095_p200_norm.xlsx')
+
+create_sim(mean=20, sigma=5, LT=10
+          ,k=10000, c=1500,  interest=1, h=150
+          ,alpha=0.99, p=2000, distFunc="normal"
+          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
+          ,FileName='res_mean20_sig5_lt10_k10000_c1500_int1_h150_alpha099_p2000_norm.xlsx')
+
+
+
+
+
 
 # plots: day vs Inventory start day, day vs Y(Q), day vs G(Q), day vs Revenue
 # plt.ticklabel_format(style='plain')
