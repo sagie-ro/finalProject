@@ -2,191 +2,188 @@ import pandas as pd
 import numpy as np
 import scipy.stats as st
 import create_demands as cd
-import matplotlib.pyplot as plt
-import designer as design
-import xlsxwriter
 import eoq
 import math
 
 
-def norm_calc_rop(alpha, LT, sigma, mean):
+def norm_calc_rop(alpha, lt, sigma, mean):
     z = st.norm.ppf(alpha)
-    b = z * (LT ** 0.5) * sigma
-    rop = mean * LT + b
-    return (z, b, rop)
+    b = z * (lt ** 0.5) * sigma
+    rop = mean * lt + b
+    return z, b, rop
 
 
-def create_heuristic_q(demand_list, heuristic_list, k, mean, h, LT = 0, rop=0):
-    '''
-    Creat list of Q by heuristics. first is optimal
+def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
+    """
+    Creat list of q by heuristics. first is optimal
 
     :param demand_list: list of demand [int[]]
     :param heuristic_list: list of heuristic ID [int[]]
     :param k: value of order cost [float]
     :param mean: mean of demand [float]
     :param h: inventory cost per unit per year [float]
-    :param LT: LeadTime value [int]
+    :param lt: LeadTime value [int]
     :param rop: Re-order point [int]
-    :return: Q_list: list of Q [float[]]
-    '''
-    Q_list = []
-    min_Q = LT*mean
-    Q_list.append(eoq.calc_eoq_1(k, mean, h, min_Q))
+    :return: Q_list: list of q [float[]]
+    """
+    q_list = []
+    min_q = lt * mean
+    q_list.append(eoq.calc_eoq_1(k, mean, h, min_q))
 
-    if 1 in heuristic_list:  # calculate average Demand and multiply with LT
-        Q_list.append((sum(demand_list) / len(demand_list)) * LT)
+    if 1 in heuristic_list:  # calculate average Demand and multiply with lt
+        q_list.append((sum(demand_list) / len(demand_list)) * lt)
 
-    if 2 in heuristic_list:  # calculate Max Demand and multiply with LT
-        Q_list.append(max(q for q in demand_list if q != 0) * LT)
+    if 2 in heuristic_list:  # calculate Max Demand and multiply with lt
+        q_list.append(max(q for q in demand_list if q != 0) * lt)
 
-    if 3 in heuristic_list:  # calculate Min Demand and multiply with LT
-        Q_list.append(min(q for q in demand_list if q != 0) * LT)
+    if 3 in heuristic_list:  # calculate Min Demand and multiply with lt
+        q_list.append(min(q for q in demand_list if q != 0) * lt)
 
     if 4 in heuristic_list:  # calculate sum Demand
-        Q_list.append(sum(demand_list))
+        q_list.append(sum(demand_list))
 
-    if 5 in heuristic_list:  # calculate Rop multiply with LT
-        Q_list.append(rop * LT)
+    if 5 in heuristic_list:  # calculate Rop multiply with lt
+        q_list.append(rop * lt)
 
     if 6 in heuristic_list:  # add daily average demand to optimal q
-        Q_list.append(max(Q_list[0] + (sum(demand_list) / len(demand_list)), 0))
+        q_list.append(max(q_list[0] + (sum(demand_list) / len(demand_list)), 0))
 
     if 7 in heuristic_list:  # subtract daily average demand to optimal q
-        Q_list.append(max(Q_list[0] - (sum(demand_list) / len(demand_list)), 0))
+        q_list.append(max(q_list[0] - (sum(demand_list) / len(demand_list)), 0))
 
-    return Q_list
+    return q_list
 
 
-def create_sim(mean, sigma, LT, k, c, interest, alpha, p,h=0, distFunc="normal", q_list=[0], FileName='res.xlsx'):
+def create_sim(mean, sigma, lt, k, c, interest, alpha, p, h=0, dist_func="normal", q_list=[0], file_name=None):
     # calc rop
-    if distFunc == "normal":
-        z, b, rop = norm_calc_rop(alpha, LT, sigma, mean)
-    if h==0:
+    if dist_func == "normal":
+        z, b, rop = norm_calc_rop(alpha, lt, sigma, mean)
+    if h == 0:
         h = (interest * c)
 
-    demandArr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
-    Q_list = create_heuristic_q(demandArr, q_list, k, mean, h, LT, rop)
-    Q_list = [math.ceil(item) for item in Q_list]
+    demand_arr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
+    q_list = create_heuristic_q(demand_arr, q_list, k, mean, h, lt, rop)
+    q_list = [math.ceil(item) for item in q_list]
 
-    simDf = []
+    sim_df = []
     summary_list = []
     cumsum = []
 
-    for Q in Q_list:
-        smD, sl, cc = sim_runner(demandArr, Q, rop, LT, h, k, c, p, b)
-        simDf.append(smD)
+    for Q in q_list:
+        sm_d, sl, cc = sim_runner(demand_arr, Q, rop, lt, h, k, c, p, b)
+        sim_df.append(sm_d)
         summary_list.append(sl)
         cumsum.append(cc)
 
-    save_to_excel(simDf, summary_list, cumsum,FileName)
+    params = pd.DataFrame(data=[[mean, sigma, lt, k, c, interest, alpha, p, h, dist_func]],
+                          columns=['mean', 'sigma', 'lt', 'k', 'c', 'interest', 'alpha', 'p', 'h', 'dist_func'])
+
+    save_to_excel(sim_df, summary_list, cumsum, params, file_name)
 
 
-def save_to_excel(simDf, summary_list, cumsum, FileName = 'res.xlsx'):
+def save_to_excel(sim_df, summary_list, cumsum, params, file_name=None):
     # save the result to exel
-    writer = pd.ExcelWriter(FileName, engine='xlsxwriter', options={'in_memory': True})
+    if file_name is None:
+        file_name = ''
+        for col in params.columns:
+            file_name += str(col)
+            file_name += str(params.loc[0, col])
+            file_name += '_'
+        file_name += 'res.xlsx'
+    writer = pd.ExcelWriter(file_name, engine='xlsxwriter', options={'in_memory': True})
 
     merge = pd.concat(summary_list)
     merge = merge.reset_index(drop=True)
-    merge.to_excel(writer, sheet_name='summary')
+    merge.to_excel(writer, sheet_name='summary', index=False)
 
-    for index in range(len(simDf)):
-        simDf[index].to_excel(writer, sheet_name='Q' + str(index) + ' - daily')
-        summary_list[index].to_excel(writer, sheet_name='Q' + str(index) + ' - daily', index=False,
-                                     startcol=len(simDf[index].columns) + 2)
-        cumsum[index].to_excel(writer, sheet_name='Q' + str(index) + ' - cumulative sum')
+    for index in range(len(sim_df)):
+        sim_df[index].to_excel(writer, sheet_name='q' + str(index) + ' - daily', index=False)
+        params.to_excel(writer, sheet_name='q' + str(index) + ' - daily', index=False,
+                        startcol=len(sim_df[index].columns) + 2)
+        rop_q = summary_list[index][['q', 'ROP']]
+        vals = summary_list[index].drop(columns=['q', 'ROP'])
+        vals.to_excel(writer, sheet_name='q' + str(index) + ' - daily', index=False,
+                      startcol=len(sim_df[index].columns) + 2, startrow=3)
+        rop_q.to_excel(writer, sheet_name='q' + str(index) + ' - daily', index=False,
+                       startcol=len(sim_df[index].columns) + 2, startrow=6)
+        cumsum[index].to_excel(writer, sheet_name='q' + str(index) + ' - cumulative sum', index=False)
 
     writer.save()
 
 
-def sim_runner(demandArr, Q, rop, LT, h, k, c, p, b):
-    simDf = pd.DataFrame(
-        columns=['Demand', 'Inventory start day', 'Inventory end day', 'days untill new supply arrives',
+def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
+    sim_df = pd.DataFrame(
+        columns=['Demand', 'Inventory start day', 'Inventory end day', 'days until new supply arrives',
                  'inventory cost', 'order cost', 'item cost', 'total daily cost', 'total units cost', 'daily profit',
-                 'total daily income',  'shortage'])
+                 'total daily income', 'shortage'])
 
-    for i in range(0, len(demandArr)):
+    for i in range(0, len(demand_arr)):
         # check inventory
         if i == 0:
-            IS = Q
+            initial_storage = q
             # -1 indicates no new order
-            daysToNewSupply = -1
+            days_to_new_supply = -1
         else:
-            IS = ES
-        ES = max(IS - demandArr[i], 0)
-        shortage = -(min(IS - demandArr[i], 0))
-        sold_units = min(demandArr[i], IS)
+            initial_storage = end_storage
+        end_storage = max(initial_storage - demand_arr[i], 0)
+        shortage = -(min(initial_storage - demand_arr[i], 0))
+        sold_units = min(demand_arr[i], initial_storage)
 
         # check if arrived new items
-        if daysToNewSupply == 1:
-            ES = ES + Q
-            daysToNewSupply = -1
-        elif daysToNewSupply > 0:
-            daysToNewSupply = daysToNewSupply - 1
+        if days_to_new_supply == 1:
+            end_storage = end_storage + q
+            days_to_new_supply = -1
+        elif days_to_new_supply > 0:
+            days_to_new_supply = days_to_new_supply - 1
 
         # check to create invite
-        if ES <= rop and daysToNewSupply == -1:
-            daysToNewSupply = LT
+        if end_storage <= rop and days_to_new_supply == -1:
+            days_to_new_supply = lt
 
         # calc the cost
-        inventory_cost = ES * h/365
-        if (daysToNewSupply == LT or i == 0 ):
+        inventory_cost = end_storage * h / 365
+        if days_to_new_supply == lt or i == 0:
             order_cost = k
-            item_cost = Q * c
+            item_cost = q * c
         else:
             order_cost = 0
             item_cost = 0
 
         total_daily_cost = inventory_cost + order_cost + item_cost
-        day = [demandArr[i], IS, ES, daysToNewSupply, inventory_cost, order_cost, item_cost, total_daily_cost,
-               sold_units, sold_units * p, sold_units * p - total_daily_cost, shortage]
+        day = [demand_arr[i], initial_storage, end_storage, days_to_new_supply, inventory_cost, order_cost, item_cost,
+               total_daily_cost, sold_units, sold_units * p, sold_units * p - total_daily_cost, shortage]
         day = pd.DataFrame(np.array([day]), columns=['Demand', 'Inventory start day', 'Inventory end day',
-                                                     'days untill new supply arrives', 'inventory cost', 'order cost',
+                                                     'days until new supply arrives', 'inventory cost', 'order cost',
                                                      'item cost', 'total daily cost', 'total units cost',
-                                                     'daily profit', 'total daily income', 'shortage'] )
-        simDf = simDf.append(day)
+                                                     'daily profit', 'total daily income', 'shortage'])
+        sim_df = sim_df.append(day)
 
-    simDf = simDf.reset_index(drop=True)
-    simDf.index += 1
+    sim_df = sim_df.reset_index(drop=True)
+    sim_df.index += 1
 
-    # create summary as: Q, b, Rop, Y(Q), G(Q), Revenue
-    summary_list = [Q, b, rop, len(simDf[simDf['days untill new supply arrives'] == LT]),
-                    simDf['inventory cost'].sum() + simDf['order cost'].sum(), simDf['total daily cost'].sum(),
-                    simDf['total daily income'].sum(),
-                    simDf['shortage'].sum()
+    # create summary as: q, b, Rop, Y(q), G(q), Revenue
+    summary_list = [q, b, rop, len(sim_df[sim_df['days until new supply arrives'] == lt]),
+                    sim_df['inventory cost'].sum() + sim_df['order cost'].sum(), sim_df['total daily cost'].sum(),
+                    sim_df['total daily income'].sum(),
+                    sim_df['shortage'].sum() / sum(demand_arr) * 100
                     ]
     summary_list = pd.DataFrame(np.array([summary_list]),
-                                columns=['Q', 'b', 'ROP', 'how many orders', 'Y(Q)', 'G(Q)', 'Revenue', 'totalShortage'])
+                                columns=['q', 'b', 'ROP', 'how many orders', 'Y(q)', 'G(q)', 'Revenue',
+                                         'Shortage Percent'])
 
     # create cumsum
     cumsum = pd.DataFrame()
-    cumsum['GQ'] = simDf['total daily cost'].cumsum()
-    cumsum['YQ'] = cumsum['GQ'] - simDf['item cost'].cumsum()
-    cumsum['Income'] = simDf['daily profit'].cumsum()
-    cumsum['Revenue'] = simDf['total daily income'].cumsum()
+    cumsum['GQ'] = sim_df['total daily cost'].cumsum()
+    cumsum['YQ'] = cumsum['GQ'] - sim_df['item cost'].cumsum()
+    cumsum['Income'] = sim_df['daily profit'].cumsum()
+    cumsum['Revenue'] = sim_df['total daily income'].cumsum()
     temp = cumsum['YQ'].copy()
     cumsum['YQ'] = cumsum['GQ']
     cumsum['GQ'] = temp
     cumsum = cumsum.rename(columns={'GQ': 'YQ', 'YQ': 'GQ'})
 
-    return simDf, summary_list, cumsum
+    return sim_df, summary_list, cumsum
 
 
-create_sim(mean=1000, sigma=120, LT=20
-          ,k=1000, c=150,  interest=0.1, h=150*0.1
-          ,alpha=0.95, p=200, distFunc="normal"
-          ,q_list=[0, 1, 2, 3, 4, 5, 6, 7]
-          ,FileName='res.xlsx')
-
-
-
-
-
-
-# plots: day vs Inventory start day, day vs Y(Q), day vs G(Q), day vs Revenue
-# plt.ticklabel_format(style='plain')
-# simDf.plot(y='Inventory start day', use_index=True)
-# Revenue.plot.line(use_index=True, title='Revenue vs days', grid=True)
-# Revenue.plot.line(use_index=True, title='Revenue vs days', grid=True)
-# Revenue.plot.line(use_index=True, title='Revenue vs days', grid=True)
-# Revenue.plot.line(use_index=True, title='Revenue vs days', grid=True)
-# plt.show()
+create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, h=150 * 0.1, alpha=0.95, p=200, dist_func="normal",
+           q_list=[0, 1, 2, 3, 4, 5, 6, 7])

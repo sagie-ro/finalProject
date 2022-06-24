@@ -1,11 +1,11 @@
 def calc_eoq_1(k, mean, h, min_Q):
     '''
-    Calculate optimal Q for given K, mean and h.
+    Calculate optimal q for given K, mean and h.
 
     :param k: Order cost
     :param mean: mean of Demand
     :param h: inventory cost per unit per year
-    :param min_Q: the min Q to order so LT * invite per year < 365
+    :param min_Q: the min q to order so lt * invite per year < 365
     :return: Optimal q (float)
     '''
     mean_yearly = mean*365
