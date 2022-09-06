@@ -5,12 +5,20 @@ import create_demands as cd
 import eoq
 import math
 
+# todo run the simulation on unif with fixed demand
+# todo run the simultion according to simulation theory of n
+# todo create Confidence interval with params, show if this is in the range
+# todo show the match equation showing the income vs the simulation
 
 def norm_calc_rop(alpha, lt, sigma, mean):
     z = st.norm.ppf(alpha)
     b = z * (lt ** 0.5) * sigma
     rop = mean * lt + b
     return z, b, rop
+
+def unif_calc_rop(alpha, lt, min, max):
+    # todo need to complete if the dist is unif
+    pass
 
 
 def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
@@ -54,30 +62,53 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
     return q_list
 
 
-def create_sim(mean, sigma, lt, k, c, interest, alpha, p, h=0, dist_func="normal", q_list=[0], file_name=None):
+def create_sim(mean, sigma, lt, k, c, interest, alpha, p, dist_func="normal", q_list=[0], file_name=None):
+    """
+    call save to excel with simulation parms
+    :param mean:
+    :param sigma:
+    :param lt:
+    :param k:
+    :param c:
+    :param interest:
+    :param alpha:
+    :param p:
+    :param h:
+    :param dist_func:
+    :param q_list:
+    :param file_name:
+    :return:
+    """
+
     # calc rop
     if dist_func == "normal":
         z, b, rop = norm_calc_rop(alpha, lt, sigma, mean)
-    if h == 0:
-        h = (interest * c)
 
+    h = interest * c
+
+    # generated the demands #todo fit it to model 1
     demand_arr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
     q_list = create_heuristic_q(demand_arr, q_list, k, mean, h, lt, rop)
     q_list = [math.ceil(item) for item in q_list]
 
+    # DataFrames of the summary
     sim_df = []
     summary_list = []
     cumsum = []
 
+    # generate q, the amount to order
     for Q in q_list:
+        # the function to create the simulation
         sm_d, sl, cc = sim_runner(demand_arr, Q, rop, lt, h, k, c, p, b)
         sim_df.append(sm_d)
         summary_list.append(sl)
         cumsum.append(cc)
 
+    # write down the parameters
     params = pd.DataFrame(data=[[mean, sigma, lt, k, c, interest, alpha, p, h, dist_func]],
                           columns=['mean', 'sigma', 'lt', 'k', 'c', 'interest', 'alpha', 'p', 'h', 'dist_func'])
 
+    #save all to excel
     save_to_excel(sim_df, summary_list, cumsum, params, file_name)
 
 
@@ -114,25 +145,32 @@ def save_to_excel(sim_df, summary_list, cumsum, params, file_name=None):
 def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
     sim_df = pd.DataFrame(
         columns=['Demand', 'Inventory start day', 'Inventory end day', 'days until new supply arrives',
-                 'inventory cost', 'order cost', 'item cost', 'total daily cost', 'total units cost', 'daily profit',
+                 'inventory cost', 'order cost', 'item cost', 'total daily cost', 'total units sold', 'daily profit',
                  'total daily income', 'shortage'])
 
+    # the simulation itself
     for i in range(0, len(demand_arr)):
         # check inventory
         if i == 0:
+            # we start the simulation when we have q in the storage
             initial_storage = q
             # -1 indicates no new order
             days_to_new_supply = -1
         else:
+            #if this is not the first day, we start a new day with storage from yesterday
             initial_storage = end_storage
+        # first we sell all that we can
         end_storage = max(initial_storage - demand_arr[i], 0)
-        shortage = -(min(initial_storage - demand_arr[i], 0))
+        # set what we couldn't sell as shortage
+        shortage = -(min( initial_storage - demand_arr[i], 0))
+        #how much we sold that day
         sold_units = min(demand_arr[i], initial_storage)
 
         # check if arrived new items
         if days_to_new_supply == 1:
             end_storage = end_storage + q
             days_to_new_supply = -1
+
         elif days_to_new_supply > 0:
             days_to_new_supply = days_to_new_supply - 1
 
@@ -154,7 +192,7 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
                total_daily_cost, sold_units, sold_units * p, sold_units * p - total_daily_cost, shortage]
         day = pd.DataFrame(np.array([day]), columns=['Demand', 'Inventory start day', 'Inventory end day',
                                                      'days until new supply arrives', 'inventory cost', 'order cost',
-                                                     'item cost', 'total daily cost', 'total units cost',
+                                                     'item cost', 'total daily cost', 'total units sold',
                                                      'daily profit', 'total daily income', 'shortage'])
         sim_df = sim_df.append(day)
 
@@ -184,6 +222,7 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
 
     return sim_df, summary_list, cumsum
 
-
-create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, h=150 * 0.1, alpha=0.95, p=200, dist_func="normal",
-           q_list=[0, 1, 2, 3, 4, 5, 6, 7])
+if __name__ == '__main__':
+    # if unif mean is min and sigma is max
+    create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
+           q_list=[0])
