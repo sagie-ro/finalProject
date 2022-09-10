@@ -17,7 +17,6 @@ def norm_calc_rop(alpha, lt, sigma, mean):
     return z, b, rop
 
 def unif_calc_rop(alpha, lt, min, max):
-    # todo need to complete if the dist is unif
     mean = (max+min)/2
     sigma = (((max-min)**2)/12)**0.5
     z = st.norm.ppf(alpha)
@@ -67,13 +66,9 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
     return q_list
 
 
-def create_sim(sigma, lt, k, c, interest, alpha, p, mean=0, unifMin=0, unifMax=0, dist_func="normal", q_list=[0], file_name=None):
+def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal", q_list=[0], file_name=None,for_loop_sim=0):
     """
     call save to excel with simulation parms
-    :param unifMax:
-    :param unifMin:
-    :param mean:
-    :param sigma:
     :param lt:
     :param k:
     :param c:
@@ -88,42 +83,47 @@ def create_sim(sigma, lt, k, c, interest, alpha, p, mean=0, unifMin=0, unifMax=0
     """
 
     # calc rop
+
     if dist_func == "normal":
-        z, b, rop = norm_calc_rop(alpha, lt, sigma, mean)
-        distfunction = cd.PosNormal
+        z, b, rop = norm_calc_rop(alpha, lt, paramdict["sigma"], paramdict["mean"])
+
 
     elif dist_func == "uniform":
-        z, b, rop = unif_calc_rop(alpha, lt, unifMin, unifMax)
-        mean = (max + min) / 2
-        sigma = (((max - min) ** 2) / 12) ** 0.5
-        distfunction = cd.Unif
+        z, b, rop = unif_calc_rop(alpha, lt, paramdict["min"], paramdict["max"])
+        paramdict["mean"] = (paramdict["max"] + paramdict["min"]) / 2
+        paramdict["sigma"] = (((paramdict["max"] - paramdict["min"]) ** 2) / 12) ** 0.5
+
     h = interest * c
 
     if for_loop_sim == 0:
-        create_sim_regular(mean, sigma, lt, k, c, interest, alpha, p, h, rop, b, dist_func, q_list, file_name)
+        print(q_list)
+        create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b,dist_func, q_list=q_list, file_name=file_name)
+
 
     else:
         for n in range(for_loop_sim):
             if n == 0:
-                summary_list = create_sim_loop(mean, sigma, lt, k, c, p, h, rop, b, dist_func="normal")
+                summary_list = create_sim_loop(paramdict, lt, k, c, p, h, rop, b, dist_func)
             else:
-                summary_list = summary_list.append(create_sim_loop(mean, sigma, lt, k, c, p, h, rop, b, dist_func="normal"))
+                summary_list = summary_list.append(create_sim_loop(paramdict, lt, k, c, p, h, rop, b, dist_func))
         summary_list.reset_index(drop=True, inplace=True)
         print(summary_list)
 
-def create_sim_loop(mean, sigma, lt, k, c, p, h, rop, b, dist_func="normal"):
+def create_sim_loop(paramdict, lt, k, c, p, h, rop, b, dist_func):
     # generated the demands
-    demand_arr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
-    q_list = create_heuristic_q(demand_arr, [0], k, mean, h, lt, rop)
+    demand_arr = cd.create_yearly_demand(paramdict, dist_func)
+    q_list = create_heuristic_q(demand_arr, [0], k, paramdict["mean"], h, lt, rop)
     q_list = [math.ceil(item) for item in q_list]
     sm_d, sl, cc = sim_runner(demand_arr, q_list[0], rop, lt, h, k, c, p, b)
     return sl
 
 
-def create_sim_regular(mean, sigma, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
+def create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
     # generated the demands #todo fit it to model 1
-    demand_arr = cd.create_yearly_demand(mean, sigma, distfunction)
-    q_list = create_heuristic_q(demand_arr, q_list, k, mean, h, lt, rop)
+    print(q_list)
+
+    demand_arr = cd.create_yearly_demand(paramdict, dist_func)
+    q_list = create_heuristic_q(demand_arr, q_list, k, paramdict["mean"], h, lt, rop)
     q_list = [math.ceil(item) for item in q_list]
 
     # DataFrames of the summary
@@ -140,7 +140,7 @@ def create_sim_regular(mean, sigma, lt, k, c, interest, alpha, p, h, rop, b, dis
         cumsum.append(cc)
 
     # write down the parameters
-    params = pd.DataFrame(data=[[mean, sigma, lt, k, c, interest, alpha, p, h, dist_func]],
+    params = pd.DataFrame(data=[[paramdict["mean"], paramdict["sigma"], lt, k, c, interest, alpha, p, h, dist_func]],
                               columns=['mean', 'sigma', 'lt', 'k', 'c', 'interest', 'alpha', 'p', 'h', 'dist_func'])
 
     # save all to excel
@@ -259,5 +259,13 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
 
 if __name__ == '__main__':
     # if unif mean is min and sigma is max
-    create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
-           q_list=[0], for_loop_sim=25)
+    #create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
+     #      q_list=[0], for_loop_sim=25)
+    paramdict={
+        "mean":0,
+        "sigma":0,
+        "max":20,
+        "min":20
+    }
+    create_sim(paramdict=paramdict, lt=1, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="uniform",
+               q_list=[0])

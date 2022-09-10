@@ -12,7 +12,7 @@ def Unif(min, max):
     return (x if x >= 0 else Unif(min, max))
 
 
-def create_yearly_demand(mean, sigma, distribution):
+def create_yearly_demand(paramdict:dict, distribution:str):
     """
     function to create array with 365 values
     :param mean:
@@ -22,6 +22,11 @@ def create_yearly_demand(mean, sigma, distribution):
     """
     # get the numbers
     demandArr = []
-    for i in range(0, 365):
-        demandArr.append(np.asscalar(distribution(mean, sigma).astype(int)))
+    if distribution =='normal':
+        for i in range(0, 365):
+            demandArr.append(np.asscalar(PosNormal(paramdict['mean'], paramdict['sigma']).astype(int)))
+    elif distribution =='uniform':
+        for i in range(0, 365):
+            demandArr.append(np.asscalar(Unif(paramdict['min'], paramdict['max']).astype(int)))
+
     return demandArr
