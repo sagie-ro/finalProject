@@ -18,7 +18,12 @@ def norm_calc_rop(alpha, lt, sigma, mean):
 
 def unif_calc_rop(alpha, lt, min, max):
     # todo need to complete if the dist is unif
-    pass
+    mean = (max+min)/2
+    sigma = (((max-min)**2)/12)**0.5
+    z = st.norm.ppf(alpha)
+    b = z * (lt ** 0.5) * sigma
+    rop = mean * lt + b
+    return z, b, rop
 
 
 def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
@@ -62,9 +67,11 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
     return q_list
 
 
-def create_sim(mean, sigma, lt, k, c, interest, alpha, p, dist_func="normal", q_list=[0], file_name=None, for_loop_sim:int = 0):
+def create_sim(sigma, lt, k, c, interest, alpha, p, mean=0, unifMin=0, unifMax=0, dist_func="normal", q_list=[0], file_name=None):
     """
     call save to excel with simulation parms
+    :param unifMax:
+    :param unifMin:
     :param mean:
     :param sigma:
     :param lt:
@@ -83,7 +90,13 @@ def create_sim(mean, sigma, lt, k, c, interest, alpha, p, dist_func="normal", q_
     # calc rop
     if dist_func == "normal":
         z, b, rop = norm_calc_rop(alpha, lt, sigma, mean)
+        distfunction = cd.PosNormal
 
+    elif dist_func == "uniform":
+        z, b, rop = unif_calc_rop(alpha, lt, unifMin, unifMax)
+        mean = (max + min) / 2
+        sigma = (((max - min) ** 2) / 12) ** 0.5
+        distfunction = cd.Unif
     h = interest * c
 
     if for_loop_sim == 0:
@@ -109,7 +122,7 @@ def create_sim_loop(mean, sigma, lt, k, c, p, h, rop, b, dist_func="normal"):
 
 def create_sim_regular(mean, sigma, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
     # generated the demands #todo fit it to model 1
-    demand_arr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
+    demand_arr = cd.create_yearly_demand(mean, sigma, distfunction)
     q_list = create_heuristic_q(demand_arr, q_list, k, mean, h, lt, rop)
     q_list = [math.ceil(item) for item in q_list]
 
@@ -243,7 +256,6 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
     cumsum = cumsum.rename(columns={'GQ': 'YQ', 'YQ': 'GQ'})
 
     return sim_df, summary_list, cumsum
-
 
 if __name__ == '__main__':
     # if unif mean is min and sigma is max
