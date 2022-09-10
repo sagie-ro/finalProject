@@ -62,7 +62,7 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
     return q_list
 
 
-def create_sim(mean, sigma, lt, k, c, interest, alpha, p, dist_func="normal", q_list=[0], file_name=None):
+def create_sim(mean, sigma, lt, k, c, interest, alpha, p, dist_func="normal", q_list=[0], file_name=None, for_loop_sim:int = 0):
     """
     call save to excel with simulation parms
     :param mean:
@@ -86,6 +86,28 @@ def create_sim(mean, sigma, lt, k, c, interest, alpha, p, dist_func="normal", q_
 
     h = interest * c
 
+    if for_loop_sim == 0:
+        create_sim_regular(mean, sigma, lt, k, c, interest, alpha, p, h, rop, b, dist_func, q_list, file_name)
+
+    else:
+        for n in range(for_loop_sim):
+            if n == 0:
+                summary_list = create_sim_loop(mean, sigma, lt, k, c, p, h, rop, b, dist_func="normal")
+            else:
+                summary_list = summary_list.append(create_sim_loop(mean, sigma, lt, k, c, p, h, rop, b, dist_func="normal"))
+        summary_list.reset_index(drop=True, inplace=True)
+        print(summary_list)
+
+def create_sim_loop(mean, sigma, lt, k, c, p, h, rop, b, dist_func="normal"):
+    # generated the demands
+    demand_arr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
+    q_list = create_heuristic_q(demand_arr, [0], k, mean, h, lt, rop)
+    q_list = [math.ceil(item) for item in q_list]
+    sm_d, sl, cc = sim_runner(demand_arr, q_list[0], rop, lt, h, k, c, p, b)
+    return sl
+
+
+def create_sim_regular(mean, sigma, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
     # generated the demands #todo fit it to model 1
     demand_arr = cd.create_yearly_demand(mean, sigma, cd.PosNormal)
     q_list = create_heuristic_q(demand_arr, q_list, k, mean, h, lt, rop)
@@ -99,16 +121,16 @@ def create_sim(mean, sigma, lt, k, c, interest, alpha, p, dist_func="normal", q_
     # generate q, the amount to order
     for Q in q_list:
         # the function to create the simulation
-        sm_d, sl, cc = sim_runner(demand_arr, Q, rop, lt, h, k, c, p, b)
+        sm_d, sl, cc = sim_runner(demand_arr, Q, rop, lt, h, k, c, p,b)  # sm_d is the simulation itself, sl is the params and summaries, cc is the cumsum
         sim_df.append(sm_d)
         summary_list.append(sl)
         cumsum.append(cc)
 
     # write down the parameters
     params = pd.DataFrame(data=[[mean, sigma, lt, k, c, interest, alpha, p, h, dist_func]],
-                          columns=['mean', 'sigma', 'lt', 'k', 'c', 'interest', 'alpha', 'p', 'h', 'dist_func'])
+                              columns=['mean', 'sigma', 'lt', 'k', 'c', 'interest', 'alpha', 'p', 'h', 'dist_func'])
 
-    #save all to excel
+    # save all to excel
     save_to_excel(sim_df, summary_list, cumsum, params, file_name)
 
 
@@ -222,7 +244,8 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
 
     return sim_df, summary_list, cumsum
 
+
 if __name__ == '__main__':
     # if unif mean is min and sigma is max
     create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
-           q_list=[0])
+           q_list=[0], for_loop_sim=25)
