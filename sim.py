@@ -123,6 +123,7 @@ def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal"
             for counter in range(len(q_list)):
                 q_to_order = q_list[counter]
                 for n in range(for_loop_sim):
+                    demand_arr = cd.create_yearly_demand(paramdict, dist_func)
                     if n == 0:
                         summary_list = create_sim_loop(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
                     else:
@@ -298,6 +299,9 @@ def create_heatmap_q_rop(summary_q_rop, n):
     t_crit = np.abs(t.ppf((0.05) / 2, n))
     heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean']-heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
     heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean']+heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
+    heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
+    pd.set_option('display.float_format', str)
+    pd.options.display.float_format = '{:.3f}'.format
     print(heatmap_q_rop)
 
 if __name__ == '__main__':
@@ -305,10 +309,10 @@ if __name__ == '__main__':
     #create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
      #      q_list=[0], for_loop_sim=25)
     paramdict={
-        "mean":0,
-        "sigma":0,
-        "max":20,
-        "min":20
+        "mean":109.58,
+        "sigma":23,
+        "max":109.58,
+        "min":109.58
     }
-    create_sim(paramdict=paramdict, lt=1, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="uniform", q_list=[0,1],
-               for_loop_sim=25, q_alternitive=[40], rop_alternitive=[200])
+    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal", q_list=[0],
+               for_loop_sim=5, q_alternitive=[], rop_alternitive=[0])
