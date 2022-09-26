@@ -6,11 +6,6 @@ import eoq
 import math
 from scipy.stats import t
 
-# todo run the simulation on unif with fixed demand
-# todo run the simultion according to simulation theory of n
-# todo create Confidence interval with params, show if this is in the range
-# todo show the match equation showing the income vs the simulation
-
 def norm_calc_rop(alpha, lt, sigma, mean):
     z = st.norm.ppf(alpha)
     b = z * (lt ** 0.5) * sigma
@@ -24,7 +19,6 @@ def unif_calc_rop(alpha, lt, min, max):
     b = z * (lt ** 0.5) * sigma
     rop = mean * lt + b
     return z, b, rop
-
 
 def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
     """
@@ -66,7 +60,6 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
 
     return q_list
 
-
 def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal", q_list=[0], file_name=None, for_loop_sim=False):
     """
     call save to excel with simulation parms
@@ -102,83 +95,48 @@ def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal"
 
     # run sim loop
     else:
-        demand_arr = cd.create_yearly_demand(paramdict, dist_func)
-        q_list = create_heuristic_q(demand_arr, q_list, k, paramdict["mean"], h, lt, rop)
-
-        # generate list of q
-        if q_alternitive == []:
-            q_list = [math.ceil(item) for item in q_list]
-        else:
-            q_list = [q_list[0]] + q_alternitive
-            q_list = [math.ceil(item) for item in q_list]
-
-        # generate list of rop
-        rop = [rop]
-        if rop_alternitive != []:
-            rop = rop + rop_alternitive
-
-        #run simulation in a loop
-        for rop_num in range(len(rop)):
-            rop_when_order = rop[rop_num]
-            for counter in range(len(q_list)):
-                q_to_order = q_list[counter]
-                for n in range(for_loop_sim):
-                    demand_arr = cd.create_yearly_demand(paramdict, dist_func)
-                    if n == 0:
-                        summary_list = run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
-                    else:
-                        summary_list = summary_list.append(run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order))
-                summary_list.reset_index(drop=True, inplace=True)
-                summary_list['q_num'] = counter
-                if q_to_order == q_list[0]:
-                    sim_summary_runner = summary_list
-                else:
-                    sim_summary_runner = sim_summary_runner.append(summary_list)
-            sim_summary_runner['rop_num'] = rop_num
-            if rop_num==0:
-                summary_q_rop = sim_summary_runner
-            else:
-                summary_q_rop = summary_q_rop.append(sim_summary_runner)
-        create_heatmap_q_rop(summary_q_rop, n)
+        create_sim_loop(paramdict, dist_func, lt, k, c, p, h)
 
 def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
     # generated the demands
     sm_d, sl, cc = sim_runner(demand_arr, q_to_order, rop, lt, h, k, c, p, b)
     return sl
 
-def create_sim_loop(paramdict:dict, dist_func:str, q_list:list,lt, k, c, p, h, b):
+def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h):
     # create the q and rop
-    demand_arr = cd.create_yearly_demand(paramdict, dist_func)
-    q_rop_dict = create_heuristic_q_rop(???)
+    #q_rop_dict = create_heuristic_q_rop(???)
+    q_rop_dict = {'alt1':{'q':100, 'rop':100, 'b': 0}, 'alt2':{'q':200, 'rop':200, 'b': 0}, 'alt3':{'q':300, 'rop':300, 'b': 0}}
     n0 = 25
 
-    k = len(q_rop_dict)
-    p_confidence_level = 0.9
-    d_field_of_indifference
+    #create demand arr #if t mzovag #if welch
+    demands_to_make = n0 # for t, if welch = len(q_rop_dict) * n0
+    demand_by_n = []
+    for i in range(demands_to_make):
+        demand_by_n.append(cd.create_yearly_demand(paramdict, dist_func))
+
     # run simulation in a loop
-    for rop_num in range(len(rop)):
-        rop_when_order = rop[rop_num]
-        for counter in range(len(q_list)):
-            q_to_order = q_list[counter]
-            for n in range(for_loop_sim):
-                demand_arr = cd.create_yearly_demand(paramdict, dist_func)
-                if n == 0:
-                    summary_list = run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
-                else:
-                    summary_list = summary_list.append(
-                        run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order))
-            summary_list.reset_index(drop=True, inplace=True)
-            summary_list['q_num'] = counter
-            if q_to_order == q_list[0]:
-                sim_summary_runner = summary_list
+    for alternitive in q_rop_dict:
+        sim_alt = q_rop_dict[alternitive]
+        rop_when_order = sim_alt['rop']
+        q_to_order = sim_alt['q']
+        b = sim_alt['b']
+        for n in range(len(demand_by_n)):
+            # demand_arr = cd.create_yearly_demand(paramdict, dist_func) for welch
+            demand_arr = demand_by_n[n] #t-paired
+            if n == 0:
+                summary_list = run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
             else:
-                sim_summary_runner = sim_summary_runner.append(summary_list)
-        sim_summary_runner['rop_num'] = rop_num
-        if rop_num == 0:
-            summary_q_rop = sim_summary_runner
+                summary_list = summary_list.append(run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order))
+        summary_list.reset_index(drop=True, inplace=True)
+        summary_list['alt_name'] = alternitive
+        if alternitive == 'alt1':
+            sim_summary_runner = summary_list
         else:
-            summary_q_rop = summary_q_rop.append(sim_summary_runner)
-    create_heatmap_q_rop(summary_q_rop, n)
+            sim_summary_runner = sim_summary_runner.append(summary_list)
+    create_heatmap_q_rop(sim_summary_runner, n0)
+
+    # todo
+    # create_t_paired()
 
 
 def create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
@@ -323,11 +281,10 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
 
 def create_heatmap_q_rop(summary_q_rop, n):
     # creating the heatmap table
-    heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue', 'q_num', 'rop_num']]
-    heatmap_q_rop = heatmap_q_rop.groupby(['q_num', 'rop_num'], as_index=False).agg({'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
+    heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue', 'alt_name']]
+    heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg({'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
     heatmap_q_rop.columns = heatmap_q_rop.columns.to_flat_index()
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
-    heatmap_q_rop = heatmap_q_rop.drop(columns=['q_num_', 'rop_num_'])
 
     # calculating confidence interval, with 5 percent
     t_crit = np.abs(t.ppf((0.05) / 2, n))
@@ -337,6 +294,7 @@ def create_heatmap_q_rop(summary_q_rop, n):
     pd.set_option('display.float_format', str)
     pd.options.display.float_format = '{:.3f}'.format
     print(heatmap_q_rop)
+    return heatmap_q_rop
 
 if __name__ == '__main__':
     # if unif mean is min and sigma is max
@@ -348,5 +306,6 @@ if __name__ == '__main__':
         "max":109.58,
         "min":109.58
     }
-    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal", q_list=[0],
-               for_loop_sim=True, q_alternitive=[], rop_alternitive=[0])
+    '''create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal", q_list=[0],
+               for_loop_sim=True, q_alternitive=[], rop_alternitive=[0])'''
+    create_sim_loop(paramdict, 'normal', 1, 1, 1, 1, 1)
