@@ -124,11 +124,13 @@ def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h):
             sim_summary_runner = summary_list
         else:
             sim_summary_runner = sim_summary_runner.append(summary_list)
-    create_heatmap_q_rop(sim_summary_runner, n0)
+    heat_map_eoq = create_heatmap_q_rop(sim_summary_runner, n0)
 
     # todo
-    # create_t_paired()
+    create_t_paired(heat_map_eoq)
 
+def create_t_paired(heat_map_eoq):
+    pass
 
 def create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
     # generated the demands #todo fit it to model 1
@@ -276,7 +278,6 @@ def create_heatmap_q_rop(summary_q_rop, n):
     heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg({'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
     heatmap_q_rop.columns = heatmap_q_rop.columns.to_flat_index()
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
-    heatmap_q_rop = heatmap_q_rop.drop(columns=['q_num_', 'rop_num_'])
 
     # calculating confidence interval, with 5 percent
     t_crit = np.abs(t.ppf((0.05) / 2, n))
@@ -298,5 +299,6 @@ if __name__ == '__main__':
         "max":109.58,
         "min":109.58
     }
-    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal", q_list=[0],
-               for_loop_sim=True, q_alternitive=[], rop_alternitive=[0])
+    '''create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal", q_list=[0],
+               for_loop_sim=True, q_alternitive=[], rop_alternitive=[0])'''
+    create_sim_loop(paramdict, 'normal', 1, 1, 1, 1, 1)
