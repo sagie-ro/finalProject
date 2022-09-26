@@ -124,11 +124,13 @@ def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha):
             sim_summary_runner = summary_list
         else:
             sim_summary_runner = sim_summary_runner.append(summary_list)
-    create_heatmap_q_rop(sim_summary_runner, n0)
+    heat_map_eoq = create_heatmap_q_rop(sim_summary_runner, n0)
 
     # todo
-    # create_t_paired()
+    create_t_paired(heat_map_eoq)
 
+def create_t_paired(heat_map_eoq):
+    pass
 
 def create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
     # generated the demands #todo fit it to model 1
