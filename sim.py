@@ -311,4 +311,4 @@ if __name__ == '__main__':
         "min":20
     }
     create_sim(paramdict=paramdict, lt=1, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="uniform", q_list=[0,1],
-               for_loop_sim=25, q_alternitive=[40], rop_alternitive=[200])
+               for_loop_sim=1, q_alternitive=[40], rop_alternitive=[200])
