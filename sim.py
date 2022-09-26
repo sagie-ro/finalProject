@@ -11,21 +11,6 @@ from scipy.stats import t
 # todo create Confidence interval with params, show if this is in the range
 # todo show the match equation showing the income vs the simulation
 
-def norm_calc_rop(alpha, lt, sigma, mean):
-    z = st.norm.ppf(alpha)
-    b = z * (lt ** 0.5) * sigma
-    rop = mean * lt + b
-    return z, b, rop
-
-def unif_calc_rop(alpha, lt, min, max):
-    mean = (max+min)/2
-    sigma = (((max-min)**2)/12)**0.5
-    z = st.norm.ppf(alpha)
-    b = z * (lt ** 0.5) * sigma
-    rop = mean * lt + b
-    return z, b, rop
-
-
 def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
     """
     Creat list of q by heuristics. first is optimal
@@ -89,11 +74,11 @@ def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal"
 
     if for_loop_sim == False:
         if dist_func == "normal":
-            z, b, rop = norm_calc_rop(alpha, lt, paramdict["sigma"], paramdict["mean"])
+            z, b, rop = eoq.norm_calc_rop(alpha, lt, paramdict["sigma"], paramdict["mean"])
 
 
         elif dist_func == "uniform":
-            z, b, rop = unif_calc_rop(alpha, lt, paramdict["min"], paramdict["max"])
+            z, b, rop = eoq.unif_calc_rop(alpha, lt, paramdict["min"], paramdict["max"])
             paramdict["mean"] = (paramdict["max"] + paramdict["min"]) / 2
             paramdict["sigma"] = (((paramdict["max"] - paramdict["min"]) ** 2) / 12) ** 0.5
 
