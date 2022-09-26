@@ -86,18 +86,18 @@ def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal"
 
     # run sim loop
     else:
-        create_sim_loop(paramdict, dist_func, lt, k, c, p, h)
+        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha)
 
 def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
     # generated the demands
     sm_d, sl, cc = sim_runner(demand_arr, q_to_order, rop, lt, h, k, c, p, b)
     return sl
 
-def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h):
+def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha):
     # create the q and rop
-    #q_rop_dict = create_heuristic_q_rop(???)
-    q_rop_dict = {'alt1':{'q':100, 'rop':100, 'b': 0}, 'alt2':{'q':200, 'rop':200, 'b': 0}, 'alt3':{'q':300, 'rop':300, 'b': 0}}
-    n0 = 25
+    #q_rop_dict = {'alt1':{'q':100, 'rop':100, 'b': 0}, 'alt2':{'q':200, 'rop':200, 'b': 0}, 'alt3':{'q':300, 'rop':300, 'b': 0}}
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=2)
+    n0 = 2
 
     #create demand arr #if t mzovag #if welch
     demands_to_make = n0 # for t, if welch = len(q_rop_dict) * n0
@@ -276,7 +276,7 @@ def create_heatmap_q_rop(summary_q_rop, n):
     heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg({'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
     heatmap_q_rop.columns = heatmap_q_rop.columns.to_flat_index()
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
-    heatmap_q_rop = heatmap_q_rop.drop(columns=['q_num_', 'rop_num_'])
+
 
     # calculating confidence interval, with 5 percent
     t_crit = np.abs(t.ppf((0.05) / 2, n))
@@ -299,4 +299,4 @@ if __name__ == '__main__':
         "min":109.58
     }
     create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal", q_list=[0],
-               for_loop_sim=True, q_alternitive=[], rop_alternitive=[0])
+               for_loop_sim=True)

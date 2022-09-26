@@ -66,3 +66,6 @@ def create_heuristic_q_rop(alpha, lt, sigma, mean, h, k, n=4):
     return heuristics
 
 
+print(create_heuristic_q_rop(0.95, 1, 23, 109.58, 1, 5000, n=2))
+
+
