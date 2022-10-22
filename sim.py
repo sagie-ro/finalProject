@@ -93,16 +93,13 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
     sm_d, sl, cc = sim_runner(demand_arr, q_to_order, rop, lt, h, k, c, p, b)
     return sl
 
-def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha):
+def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha, demand_by_n = [], n0=25):
     # create the q and rop
-    #q_rop_dict = {'alt1':{'q':100, 'rop':100, 'b': 0}, 'alt2':{'q':200, 'rop':200, 'b': 0}, 'alt3':{'q':300, 'rop':300, 'b': 0}}
     q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=2)
-    n0 = 2
 
     #create demand arr #if t mzovag #if welch
     demands_to_make = n0 # for t, if welch = len(q_rop_dict) * n0
-    demand_by_n = []
-    for i in range(demands_to_make):
+    for i in range(demands_to_make - len(demand_by_n)):
         demand_by_n.append(cd.create_yearly_demand(paramdict, dist_func))
 
     # run simulation in a loop
@@ -124,13 +121,16 @@ def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha):
             sim_summary_runner = summary_list
         else:
             sim_summary_runner = sim_summary_runner.append(summary_list)
-    heat_map_eoq = create_heatmap_q_rop(sim_summary_runner, n0)
+    heat_map_eoq,new_n = create_heatmap_q_rop(sim_summary_runner, n0)
 
-    # todo
-    create_t_paired(heat_map_eoq)
+    # run it enough times
+    if new_n > n0:
+        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha, demand_by_n, new_n)
+    else:
+        print(heat_map_eoq)
 
 def create_t_paired(heat_map_eoq):
-    pass
+    print(heat_map_eoq)
 
 def create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
     # generated the demands #todo fit it to model 1
@@ -285,10 +285,20 @@ def create_heatmap_q_rop(summary_q_rop, n):
     heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean']-heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
     heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean']+heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
     heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
+    heatmap_q_rop['half_CI'] = (t_crit * heatmap_q_rop['Revenue_std'])/((n+1)**0.5)
+    gama = 0.1
+    gama_tag = gama / (1 + gama)
+    heatmap_q_rop['precision'] = heatmap_q_rop['half_CI']/heatmap_q_rop['Revenue_mean']
+    heatmap_q_rop['N_to_make'] = (n+1)*((heatmap_q_rop['precision']/gama_tag)**2)
+    heatmap_q_rop['N_to_make'] = heatmap_q_rop['N_to_make'].apply(np.ceil)
+    heatmap_q_rop['N_to_make_more'] = heatmap_q_rop['N_to_make'] - n
+    heatmap_q_rop.loc[heatmap_q_rop['N_to_make_more'] < 0, 'N_to_make_more'] = 0
     pd.set_option('display.float_format', str)
     pd.options.display.float_format = '{:.3f}'.format
-    print(heatmap_q_rop)
-    return heatmap_q_rop
+    pd.set_option('display.max_columns', None)
+    n_more_to_make = int(max(heatmap_q_rop['N_to_make_more']))
+    heatmap_q_rop = heatmap_q_rop[['alt_name_', 'q_first', 'ROP_first', 'Revenue_mean', 'Revenue_std', 'CI_min', 'CI_max']]
+    return heatmap_q_rop, n_more_to_make
 
 if __name__ == '__main__':
     # if unif mean is min and sigma is max
@@ -300,5 +310,5 @@ if __name__ == '__main__':
         "max":109.58,
         "min":109.58
     }
-    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal", q_list=[0],
+    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=20, dist_func="normal", q_list=[0],
                for_loop_sim=True)
