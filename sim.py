@@ -95,7 +95,9 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
 
 def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha, demand_by_n = [], n0=25):
     # create the q and rop
-    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=2)
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5)
+    print(q_rop_dict)
+    print('times to run the sim', n0)
 
     #create demand arr #if t mzovag #if welch
     demands_to_make = n0 # for t, if welch = len(q_rop_dict) * n0
