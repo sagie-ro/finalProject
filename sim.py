@@ -53,7 +53,9 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
 
 def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal", q_list=[0], file_name=None, for_loop_sim=False):
     """
-    call save to excel with simulation parms
+    call save to excel with simulation params
+    :param paramdict:
+    :param for_loop_sim: bool
     :param lt:
     :param k:
     :param c:
@@ -87,6 +89,49 @@ def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal"
     # run sim loop
     else:
         create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha)
+
+'''
+def create_sim_production(lt, k, c, interest, alpha, p, paramdict: dict, dist_func="normal", q_list=[0], file_name=None,
+                          for_loop_sim=False):
+    """
+    call save to excel with simulation params
+    :param paramdict:
+    :param for_loop_sim: bool
+    :param lt:
+    :param k:
+    :param c:
+    :param interest:
+    :param alpha:
+    :param p:
+    :param h:
+    :param dist_func:
+    :param q_list:
+    :param file_name:
+    :return:
+    """
+
+    # calc rop
+
+    h = interest * c
+
+    if for_loop_sim == False:
+        if dist_func == "normal":
+            z, b, rop = eoq.norm_calc_rop(alpha, lt, paramdict["sigma"], paramdict["mean"])
+
+
+        elif dist_func == "uniform":
+            z, b, rop = eoq.unif_calc_rop(alpha, lt, paramdict["min"], paramdict["max"])
+            paramdict["mean"] = (paramdict["max"] + paramdict["min"]) / 2
+            paramdict["sigma"] = (((paramdict["max"] - paramdict["min"]) ** 2) / 12) ** 0.5
+
+        print(q_list)
+        create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func, q_list=q_list,
+                           file_name=file_name)
+
+    # run sim loop
+    else:
+        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha)
+'''
 
 def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
     # generated the demands
@@ -193,9 +238,9 @@ def save_to_excel(sim_df, summary_list, cumsum, params, file_name=None):
     writer.save()
 
 
-def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
+def sim_runner(demand_arr, production_rate, q, rop, lt, h, k, c, p, b):
     sim_df = pd.DataFrame(
-        columns=['Demand', 'Inventory start day', 'Inventory end day', 'days until new supply arrives',
+        columns=['Demand', 'Production', 'Inventory start day', 'Inventory end day', 'days until new supply arrives',
                  'inventory cost', 'order cost', 'item cost', 'total daily cost', 'total units sold', 'daily profit',
                  'total daily income', 'shortage'])
 
@@ -207,23 +252,27 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
             initial_storage = q
             # -1 indicates no new order
             days_to_new_supply = -1
+            # produced in a day
+            production = 0
         else:
-            #if this is not the first day, we start a new day with storage from yesterday
+            # if this is not the first day, we start a new day with storage from yesterday
             initial_storage = end_storage
-
         # first we sell all that we can
         end_storage = max(initial_storage - demand_arr[i], 0)
         # set what we couldn't sell as shortage
-        shortage = -(min( initial_storage - demand_arr[i], 0))
-        #how much we sold that day
+        shortage = -(min(initial_storage - demand_arr[i], 0))
+        # how much we sold that day
         sold_units = min(demand_arr[i], initial_storage)
 
         # check if arrived new items
         if days_to_new_supply == 1:
-            end_storage = end_storage + q
+            end_storage = end_storage + production
+            production = 0
             days_to_new_supply = -1
 
-        elif days_to_new_supply > 0:
+        elif days_to_new_supply > 1:
+            production = production_rate
+            end_storage = end_storage + production
             days_to_new_supply = days_to_new_supply - 1
 
         # check to create invite
@@ -240,9 +289,9 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
             item_cost = 0
 
         total_daily_cost = inventory_cost + order_cost + item_cost
-        day = [demand_arr[i], initial_storage, end_storage, days_to_new_supply, inventory_cost, order_cost, item_cost,
+        day = [demand_arr[i],production, initial_storage, end_storage, days_to_new_supply, inventory_cost, order_cost, item_cost,
                total_daily_cost, sold_units, sold_units * p, sold_units * p - total_daily_cost, shortage]
-        day = pd.DataFrame(np.array([day]), columns=['Demand', 'Inventory start day', 'Inventory end day',
+        day = pd.DataFrame(np.array([day]), columns=['Demand', 'Production', 'Inventory start day', 'Inventory end day',
                                                      'days until new supply arrives', 'inventory cost', 'order cost',
                                                      'item cost', 'total daily cost', 'total units sold',
                                                      'daily profit', 'total daily income', 'shortage'])
@@ -278,7 +327,8 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
 def create_heatmap_q_rop(summary_q_rop, n):
     # creating the heatmap table
     heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue', 'alt_name']]
-    heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg({'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
+    heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg(
+        {'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
     heatmap_q_rop.columns = heatmap_q_rop.columns.to_flat_index()
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
 
@@ -305,13 +355,22 @@ def create_heatmap_q_rop(summary_q_rop, n):
 
 if __name__ == '__main__':
     # if unif mean is min and sigma is max
-    #create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
-     #      q_list=[0], for_loop_sim=25)
-    paramdict={
-        "mean":109.58,
-        "sigma":23,
-        "max":109.58,
-        "min":109.58
+    # create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
+    #      q_list=[0], for_loop_sim=25)
+    paramdict = {
+        "mean": 109.58,
+        "sigma": 23,
+        "max": 109.58,
+        "min": 109.58,
+        "manufacture_mean": -1
     }
-    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=20, dist_func="normal", q_list=[0],
-               for_loop_sim=True)
+    if paramdict['manufacture_mean'] == -1:
+        create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal",
+                   q_list=[0], for_loop_sim=True)
+'''
+    else:
+        create_sim_production(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12,
+                              dist_func="normal",
+                              q_list=[0],
+                              for_loop_sim=True)
+'''
