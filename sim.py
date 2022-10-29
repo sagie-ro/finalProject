@@ -210,6 +210,7 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
         else:
             #if this is not the first day, we start a new day with storage from yesterday
             initial_storage = end_storage
+
         # first we sell all that we can
         end_storage = max(initial_storage - demand_arr[i], 0)
         # set what we couldn't sell as shortage
@@ -283,7 +284,7 @@ def create_heatmap_q_rop(summary_q_rop, n):
 
 
     # calculating confidence interval, with 5 percent
-    t_crit = np.abs(t.ppf((0.05) / 2, n))
+    t_crit = np.abs(t.ppf((0.05) / 2, n)) #todo check it
     heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean']-heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
     heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean']+heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
     heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
@@ -296,7 +297,7 @@ def create_heatmap_q_rop(summary_q_rop, n):
     heatmap_q_rop['N_to_make_more'] = heatmap_q_rop['N_to_make'] - n
     heatmap_q_rop.loc[heatmap_q_rop['N_to_make_more'] < 0, 'N_to_make_more'] = 0
     pd.set_option('display.float_format', str)
-    pd.options.display.float_format = '{:.3f}'.format
+    pd.options.display.float_format = '{:.3f}'.formatד
     pd.set_option('display.max_columns', None)
     n_more_to_make = int(max(heatmap_q_rop['N_to_make_more']))
     heatmap_q_rop = heatmap_q_rop[['alt_name_', 'q_first', 'ROP_first', 'Revenue_mean', 'Revenue_std', 'CI_min', 'CI_max']]
