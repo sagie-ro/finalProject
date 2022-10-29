@@ -32,7 +32,7 @@ def calc_eoq_1(k, mean, h, min_Q):
     return max(Q_opt, min_Q)
 
 
-def create_heuristic_q_rop(alpha, lt, sigma, mean, h, k, n=4):
+def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     """
         Return dict of n heuristics (q,rop,b).
         :param alpha: service level
@@ -44,28 +44,44 @@ def create_heuristic_q_rop(alpha, lt, sigma, mean, h, k, n=4):
         :param n: number of heuristics (int)
         :return: heuristics (dict)
     """
-
+    # init dict
     heuristics = {}
-    name = 'alt'
-    for i in range(1, n + 1, 2):
-        lt, sigma, mean = lt * i, sigma * i, mean * i
-        # normal
-        z, b, rop = norm_calc_rop(alpha, lt, sigma, mean)
-        min_q = lt * mean
-        q = calc_eoq_1(k, mean, h, min_q)
 
-        heuristics[f'alt{i}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+    # normal
+    z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
+    min_q = lt * baseMean
+    q = calc_eoq_1(k, baseMean, h, min_q)
+    heuristics[f'alt{0}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
-        # Uniform
-        z, b, rop = unif_calc_rop(alpha, lt, min=mean - (mean / 2), max=mean + (mean / 2))
-        min_q = lt * mean
-        q = calc_eoq_1(k, mean, h, min_q)
+    # Uniform
+    z, b, rop = unif_calc_rop(alpha, lt, min=baseMean - (baseMean / 2), max=basemean + (basemean / 2))
+    min_q = lt * basemean
+    q = calc_eoq_1(k, mean, h, min_q)
+    heuristics[f'alt{1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
-        heuristics[f'alt{i + 1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+    for i in range(0, n,2):
+
+        if i%4==0 or i%4==2 :
+            if i % 4 == 0:
+            mean =  baseMean + i
+
+            # normal
+            z, b, rop = norm_calc_rop(alpha, lt, sigma, mean)
+            min_q = lt * mean
+            q = calc_eoq_1(k, mean, h, min_q)
+
+            heuristics[f'alt{i}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+
+            # Uniform
+            z, b, rop = unif_calc_rop(alpha, lt, min=mean - (mean / 2), max=mean + (mean / 2))
+            min_q = lt * mean
+            q = calc_eoq_1(k, mean, h, min_q)
+
+            heuristics[f'alt{i + 1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
     return heuristics
 
 
-print(create_heuristic_q_rop(0.95, 1, 23, 109.58, 1, 5000, n=2))
+print(create_heuristic_q_rop(0.95, 1, 23, 109.58, 1, 5000, n=8))
 
 
