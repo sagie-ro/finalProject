@@ -38,7 +38,7 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
         :param alpha: service level
         :param lt: lead-time
         :param sigma: standard-deviation
-        :param mean: mean of Demand
+        :param baseMean: mean of Demand
         :param h: inventory cost per unit per year
         :param k: Order cost
         :param n: number of heuristics (int)
@@ -51,37 +51,48 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
     min_q = lt * baseMean
     q = calc_eoq_1(k, baseMean, h, min_q)
-    heuristics[f'alt{0}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
-
-    # Uniform
-    z, b, rop = unif_calc_rop(alpha, lt, min=baseMean - (baseMean / 2), max=basemean + (basemean / 2))
-    min_q = lt * basemean
-    q = calc_eoq_1(k, mean, h, min_q)
     heuristics[f'alt{1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
-    for i in range(0, n,2):
+    # Uniform
+    z, b, rop = unif_calc_rop(alpha, lt, min=baseMean - (baseMean / 2), max=baseMean + (baseMean / 2))
+    min_q = lt * baseMean
+    q = calc_eoq_1(k, baseMean, h, min_q)
+    heuristics[f'alt{2}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
-        if i%4==0 or i%4==2 :
-            if i % 4 == 0:
-            mean =  baseMean + i
-
+    increment = 1
+    posmean = baseMean  # add incerements
+    negmean = baseMean  # substract increments
+    for i in range(3, n, 2):
+        if i % 4 == 3:
+            posmean += increment
             # normal
-            z, b, rop = norm_calc_rop(alpha, lt, sigma, mean)
-            min_q = lt * mean
-            q = calc_eoq_1(k, mean, h, min_q)
+            z, b, rop = norm_calc_rop(alpha, lt, sigma, posmean)
+            min_q = lt * posmean
+            q = calc_eoq_1(k, posmean, h, min_q)
 
             heuristics[f'alt{i}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
             # Uniform
-            z, b, rop = unif_calc_rop(alpha, lt, min=mean - (mean / 2), max=mean + (mean / 2))
-            min_q = lt * mean
-            q = calc_eoq_1(k, mean, h, min_q)
+            z, b, rop = unif_calc_rop(alpha, lt, min=posmean - (posmean / 2), max=posmean + (posmean / 2))
+            min_q = lt * posmean
+            q = calc_eoq_1(k, posmean, h, min_q)
+
+            heuristics[f'alt{i + 1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+
+        if i % 4 == 1:
+            negmean -= increment
+            # normal
+            z, b, rop = norm_calc_rop(alpha, lt, sigma, negmean)
+            min_q = lt * negmean
+            q = calc_eoq_1(k, negmean, h, min_q)
+
+            heuristics[f'alt{i}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+
+            # Uniform
+            z, b, rop = unif_calc_rop(alpha, lt, min=negmean - (negmean / 2), max=negmean + (negmean / 2))
+            min_q = lt * negmean
+            q = calc_eoq_1(k, negmean, h, min_q)
 
             heuristics[f'alt{i + 1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
     return heuristics
-
-
-print(create_heuristic_q_rop(0.95, 1, 23, 109.58, 1, 5000, n=8))
-
-

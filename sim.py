@@ -11,6 +11,7 @@ from scipy.stats import t
 # todo create Confidence interval with params, show if this is in the range
 # todo show the match equation showing the income vs the simulation
 
+
 def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
     """
     Creat list of q by heuristics. first is optimal
@@ -51,18 +52,18 @@ def create_heuristic_q(demand_list, heuristic_list, k, mean, h, lt=0, rop=0):
 
     return q_list
 
-def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal", q_list=[0], file_name=None, for_loop_sim=False):
+
+def create_sim(lt, k, c, interest, alpha, p, paramdict: dict, dist_func="normal", q_list=[0], file_name=None, for_loop_sim=False):
     """
-    call save to excel with simulation params
-    :param paramdict:
+    call save to excel with simulation parms
     :param for_loop_sim: bool
+    :param paramdict: dict
     :param lt:
     :param k:
     :param c:
     :param interest:
     :param alpha:
     :param p:
-    :param h:
     :param dist_func:
     :param q_list:
     :param file_name:
@@ -73,7 +74,7 @@ def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal"
 
     h = interest * c
 
-    if for_loop_sim == False:
+    if not for_loop_sim:
         if dist_func == "normal":
             z, b, rop = eoq.norm_calc_rop(alpha, lt, paramdict["sigma"], paramdict["mean"])
 
@@ -84,68 +85,27 @@ def create_sim( lt, k, c, interest, alpha, p, paramdict:dict, dist_func="normal"
             paramdict["sigma"] = (((paramdict["max"] - paramdict["min"]) ** 2) / 12) ** 0.5
 
         print(q_list)
-        create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b,dist_func, q_list=q_list, file_name=file_name)
+        create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func, q_list=q_list, file_name=file_name)
 
     # run sim loop
     else:
         create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha)
 
-'''
-def create_sim_production(lt, k, c, interest, alpha, p, paramdict: dict, dist_func="normal", q_list=[0], file_name=None,
-                          for_loop_sim=False):
-    """
-    call save to excel with simulation params
-    :param paramdict:
-    :param for_loop_sim: bool
-    :param lt:
-    :param k:
-    :param c:
-    :param interest:
-    :param alpha:
-    :param p:
-    :param h:
-    :param dist_func:
-    :param q_list:
-    :param file_name:
-    :return:
-    """
-
-    # calc rop
-
-    h = interest * c
-
-    if for_loop_sim == False:
-        if dist_func == "normal":
-            z, b, rop = eoq.norm_calc_rop(alpha, lt, paramdict["sigma"], paramdict["mean"])
-
-
-        elif dist_func == "uniform":
-            z, b, rop = eoq.unif_calc_rop(alpha, lt, paramdict["min"], paramdict["max"])
-            paramdict["mean"] = (paramdict["max"] + paramdict["min"]) / 2
-            paramdict["sigma"] = (((paramdict["max"] - paramdict["min"]) ** 2) / 12) ** 0.5
-
-        print(q_list)
-        create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func, q_list=q_list,
-                           file_name=file_name)
-
-    # run sim loop
-    else:
-        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha)
-'''
 
 def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
     # generated the demands
     sm_d, sl, cc = sim_runner(demand_arr, q_to_order, rop, lt, h, k, c, p, b)
     return sl
 
-def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha, demand_by_n = [], n0=25):
+
+def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, demand_by_n=[], n0=5):
     # create the q and rop
     q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5)
     print(q_rop_dict)
     print('times to run the sim', n0)
 
-    #create demand arr #if t mzovag #if welch
-    demands_to_make = n0 # for t, if welch = len(q_rop_dict) * n0
+    # create demand arr #if t mzovag #if welch
+    demands_to_make = n0  # for t, if welch = len(q_rop_dict) * n0
     for i in range(demands_to_make - len(demand_by_n)):
         demand_by_n.append(cd.create_yearly_demand(paramdict, dist_func))
 
@@ -157,7 +117,7 @@ def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha, demand
         b = sim_alt['b']
         for n in range(len(demand_by_n)):
             # demand_arr = cd.create_yearly_demand(paramdict, dist_func) for welch
-            demand_arr = demand_by_n[n] #t-paired
+            demand_arr = demand_by_n[n]  # t-paired
             if n == 0:
                 summary_list = run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
             else:
@@ -168,7 +128,7 @@ def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha, demand
             sim_summary_runner = summary_list
         else:
             sim_summary_runner = sim_summary_runner.append(summary_list)
-    heat_map_eoq,new_n = create_heatmap_q_rop(sim_summary_runner, n0)
+    heat_map_eoq, new_n = create_heatmap_q_rop(sim_summary_runner, n0)
 
     # run it enough times
     if new_n > n0:
@@ -176,8 +136,10 @@ def create_sim_loop(paramdict:dict, dist_func:str, lt, k, c, p, h, alpha, demand
     else:
         print(heat_map_eoq)
 
+
 def create_t_paired(heat_map_eoq):
     print(heat_map_eoq)
+
 
 def create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_func="normal", q_list=[0], file_name=None):
     # generated the demands #todo fit it to model 1
@@ -195,14 +157,14 @@ def create_sim_regular(paramdict, lt, k, c, interest, alpha, p, h, rop, b, dist_
     # generate q, the amount to order
     for Q in q_list:
         # the function to create the simulation
-        sm_d, sl, cc = sim_runner(demand_arr, Q, rop, lt, h, k, c, p,b)  # sm_d is the simulation itself, sl is the params and summaries, cc is the cumsum
+        sm_d, sl, cc = sim_runner(demand_arr, Q, rop, lt, h, k, c, p, b)  # sm_d is the simulation itself, sl is the params and summaries, cc is the cumsum
         sim_df.append(sm_d)
         summary_list.append(sl)
         cumsum.append(cc)
 
     # write down the parameters
     params = pd.DataFrame(data=[[paramdict["mean"], paramdict["sigma"], lt, k, c, interest, alpha, p, h, dist_func]],
-                              columns=['mean', 'sigma', 'lt', 'k', 'c', 'interest', 'alpha', 'p', 'h', 'dist_func'])
+        columns=['mean', 'sigma', 'lt', 'k', 'c', 'interest', 'alpha', 'p', 'h', 'dist_func'])
 
     # save all to excel
     save_to_excel(sim_df, summary_list, cumsum, params, file_name)
@@ -238,9 +200,9 @@ def save_to_excel(sim_df, summary_list, cumsum, params, file_name=None):
     writer.save()
 
 
-def sim_runner(demand_arr, production_rate, q, rop, lt, h, k, c, p, b):
+def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
     sim_df = pd.DataFrame(
-        columns=['Demand', 'Production', 'Inventory start day', 'Inventory end day', 'days until new supply arrives',
+        columns=['Demand', 'Inventory start day', 'Inventory end day', 'days until new supply arrives',
                  'inventory cost', 'order cost', 'item cost', 'total daily cost', 'total units sold', 'daily profit',
                  'total daily income', 'shortage'])
 
@@ -252,11 +214,10 @@ def sim_runner(demand_arr, production_rate, q, rop, lt, h, k, c, p, b):
             initial_storage = q
             # -1 indicates no new order
             days_to_new_supply = -1
-            # produced in a day
-            production = 0
         else:
             # if this is not the first day, we start a new day with storage from yesterday
             initial_storage = end_storage
+
         # first we sell all that we can
         end_storage = max(initial_storage - demand_arr[i], 0)
         # set what we couldn't sell as shortage
@@ -266,13 +227,10 @@ def sim_runner(demand_arr, production_rate, q, rop, lt, h, k, c, p, b):
 
         # check if arrived new items
         if days_to_new_supply == 1:
-            end_storage = end_storage + production
-            production = 0
+            end_storage = end_storage + q
             days_to_new_supply = -1
 
-        elif days_to_new_supply > 1:
-            production = production_rate
-            end_storage = end_storage + production
+        elif days_to_new_supply > 0:
             days_to_new_supply = days_to_new_supply - 1
 
         # check to create invite
@@ -289,9 +247,9 @@ def sim_runner(demand_arr, production_rate, q, rop, lt, h, k, c, p, b):
             item_cost = 0
 
         total_daily_cost = inventory_cost + order_cost + item_cost
-        day = [demand_arr[i],production, initial_storage, end_storage, days_to_new_supply, inventory_cost, order_cost, item_cost,
+        day = [demand_arr[i], initial_storage, end_storage, days_to_new_supply, inventory_cost, order_cost, item_cost,
                total_daily_cost, sold_units, sold_units * p, sold_units * p - total_daily_cost, shortage]
-        day = pd.DataFrame(np.array([day]), columns=['Demand', 'Production', 'Inventory start day', 'Inventory end day',
+        day = pd.DataFrame(np.array([day]), columns=['Demand', 'Inventory start day', 'Inventory end day',
                                                      'days until new supply arrives', 'inventory cost', 'order cost',
                                                      'item cost', 'total daily cost', 'total units sold',
                                                      'daily profit', 'total daily income', 'shortage'])
@@ -327,14 +285,13 @@ def sim_runner(demand_arr, production_rate, q, rop, lt, h, k, c, p, b):
 def create_heatmap_q_rop(summary_q_rop, n):
     # creating the heatmap table
     heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue', 'alt_name']]
-    heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg(
-        {'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
+    heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg({'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
     heatmap_q_rop.columns = heatmap_q_rop.columns.to_flat_index()
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
 
 
     # calculating confidence interval, with 5 percent
-    t_crit = np.abs(t.ppf((0.05) / 2, n)) #todo check it
+    t_crit = np.abs(t.ppf(0.05 / 2, n))  # todo check it
     heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean']-heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
     heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean']+heatmap_q_rop['Revenue_std']*t_crit/np.sqrt(n + 1)
     heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
@@ -347,7 +304,7 @@ def create_heatmap_q_rop(summary_q_rop, n):
     heatmap_q_rop['N_to_make_more'] = heatmap_q_rop['N_to_make'] - n
     heatmap_q_rop.loc[heatmap_q_rop['N_to_make_more'] < 0, 'N_to_make_more'] = 0
     pd.set_option('display.float_format', str)
-    pd.options.display.float_format = '{:.3f}'.formatד
+    pd.options.display.float_format = '{:.3f}'.format
     pd.set_option('display.max_columns', None)
     n_more_to_make = int(max(heatmap_q_rop['N_to_make_more']))
     heatmap_q_rop = heatmap_q_rop[['alt_name_', 'q_first', 'ROP_first', 'Revenue_mean', 'Revenue_std', 'CI_min', 'CI_max']]
@@ -355,22 +312,13 @@ def create_heatmap_q_rop(summary_q_rop, n):
 
 if __name__ == '__main__':
     # if unif mean is min and sigma is max
-    # create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
-    #      q_list=[0], for_loop_sim=25)
-    paramdict = {
-        "mean": 109.58,
-        "sigma": 23,
-        "max": 109.58,
-        "min": 109.58,
-        "manufacture_mean": -1
+    #create_sim(mean=1000, sigma=120, lt=20, k=1000, c=150, interest=0.1, alpha=0.95, p=200, dist_func="normal",
+     #      q_list=[0], for_loop_sim=25)
+    paramdict={
+        "mean":109.58,
+        "sigma":23,
+        "max":109.58,
+        "min":109.58
     }
-    if paramdict['manufacture_mean'] == -1:
-        create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12, dist_func="normal",
-                   q_list=[0], for_loop_sim=True)
-'''
-    else:
-        create_sim_production(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=12,
-                              dist_func="normal",
-                              q_list=[0],
-                              for_loop_sim=True)
-'''
+    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=20, dist_func="normal", q_list=[0],
+               for_loop_sim=True)
