@@ -1,4 +1,5 @@
 import scipy.stats as st
+import math
 
 
 def norm_calc_rop(alpha, lt, sigma, mean):
@@ -44,14 +45,36 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
         :param n: number of heuristics (int)
         :return: heuristics (dict)
     """
-    # init dict
+    # init
     heuristics = {}
+    count = 2
+    increment = 1
 
     # normal
     z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
     min_q = lt * baseMean
     q = calc_eoq_1(k, baseMean, h, min_q)
     heuristics[f'alt{1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+
+    q = q - (increment * (int(math.sqrt(n))/2))
+    #print(math.sqrt(n))
+    for i in range(1 , n):
+        z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
+        rop -= increment * ( math.sqrt(n)/2 )
+        for j in range(1,int(math.sqrt(n))+1):
+            heuristics[f'alt{count}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+            rop+=increment
+            count+=1
+            if count>n: break
+        heuristics[f'alt{count}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+        q += increment
+        count+=1
+        if count > n: break
+    return heuristics
+
+#print (create_heuristic_q_rop(0.95, lt=1, sigma=23, baseMean=109.58, h=1, k=5000, n=8))
+
+'''
 
     # Uniform
     z, b, rop = unif_calc_rop(alpha, lt, min=baseMean - (baseMean / 2), max=baseMean + (baseMean / 2))
@@ -62,7 +85,29 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     increment = 1
     posmean = baseMean  # add incerements
     negmean = baseMean  # substract increments
-    for i in range(3, n, 2):
+    posQ = q
+    negQ = q
+    posROP = rop
+    negROP = rop
+    for i in range(3, n+1):
+        if i % 4 == 1:
+            posQ += increment
+            heuristics[f'alt{i}'] = {'q': int(posQ), 'rop': int(posROP), 'b': int(b)}
+
+        if i % 4 == 2:
+            posROP += increment
+            heuristics[f'alt{i }'] = {'q': int(posQ), 'rop': int(posROP), 'b': int(b)}
+
+        if i % 4 == 3:
+            negQ -= increment
+            heuristics[f'alt{i}'] = {'q': int(negQ), 'rop': int(negROP), 'b': int(b)}
+
+        if i % 4 == 0:
+            negROP -= increment
+            heuristics[f'alt{i}'] = {'q': int(negQ), 'rop': int(negROP), 'b': int(b)}
+'''
+'''    
+for i in range(3, n, 2):
         if i % 4 == 3:
             posmean += increment
             # normal
@@ -94,5 +139,5 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
             q = calc_eoq_1(k, negmean, h, min_q)
 
             heuristics[f'alt{i + 1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
+'''
 
-    return heuristics
