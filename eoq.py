@@ -57,7 +57,7 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     heuristics[f'alt{1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
     q = q - (increment * (int(math.sqrt(n))/2))
-    #print(math.sqrt(n))
+
     for i in range(1 , n):
         z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
         rop -= increment * ( math.sqrt(n)/2 )
@@ -68,7 +68,7 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
             if count>n: break
         heuristics[f'alt{count}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
         q += increment
-        count+=1
+        count +=1
         if count > n: break
     return heuristics
 

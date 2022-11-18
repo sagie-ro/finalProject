@@ -6,6 +6,9 @@ import eoq
 import math
 from scipy.stats import t
 
+from datetime import datetime
+startTime = datetime.now()
+
 # todo run the simulation on unif with fixed demand
 # todo run the simultion according to simulation theory of n
 # todo create Confidence interval with params, show if this is in the range
@@ -89,7 +92,9 @@ def create_sim(lt, k, c, interest, alpha, p, paramdict: dict, dist_func="normal"
 
     # run sim loop
     else:
-        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha)
+        sim_summary_runner = pd.DataFrame(columns=['q', 'b', 'ROP', 'how many orders', 'Y(q)', 'G(q)', 'Revenue', 'Shortage Percent', 'alt_name'])
+
+        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha,sim_summary_runner)
 
 
 def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
@@ -98,9 +103,9 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
     return sl
 
 
-def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, demand_by_n=[], n0=5):
+def create_sim_loop( paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n=[], n0=25):
     # create the q and rop
-    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=16)
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=3)
     print(q_rop_dict)
     print('times to run the sim', n0)
 
@@ -121,20 +126,20 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, dema
             if n == 0:
                 summary_list = run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
             else:
-                summary_list = summary_list.append(run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order))
+                summary_list = pd.concat([summary_list, run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)])
         summary_list.reset_index(drop=True, inplace=True)
         summary_list['alt_name'] = alternitive
-        if alternitive == 'alt1':
-            sim_summary_runner = summary_list
-        else:
-            sim_summary_runner = sim_summary_runner.append(summary_list)
+
+        sim_summary_runner = pd.concat([sim_summary_runner, summary_list])
     heat_map_eoq, new_n = create_heatmap_q_rop(sim_summary_runner, n0)
 
     # run it enough times
     if new_n > n0:
-        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha, demand_by_n, new_n)
+        create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n, new_n)
     else:
         print(heat_map_eoq)
+        sim_summary_runner.to_csv("sum_runner.csv", index=False)
+        heat_map_eoq.to_csv("sum_heatmap.csv", index=False)
 
 
 def create_t_paired(heat_map_eoq):
@@ -253,7 +258,7 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
                                                      'days until new supply arrives', 'inventory cost', 'order cost',
                                                      'item cost', 'total daily cost', 'total units sold',
                                                      'daily profit', 'total daily income', 'shortage'])
-        sim_df = sim_df.append(day)
+        sim_df = pd.concat([sim_df, day])
 
     sim_df = sim_df.reset_index(drop=True)
     sim_df.index += 1
@@ -322,3 +327,5 @@ if __name__ == '__main__':
     }
     create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=20, dist_func="normal", q_list=[0],
                for_loop_sim=True)
+
+    print(f' simulation run time: {datetime.now() - startTime}')
