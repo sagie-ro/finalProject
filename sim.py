@@ -6,8 +6,7 @@ import eoq
 import math
 from scipy.stats import t
 
-from alive_progress import alive_bar  # Repo: https://github.com/rsalmei/alive-progress
-
+from alive_progress import alive_bar
 from datetime import datetime
 
 
@@ -112,7 +111,7 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
 
 def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n=[], n0=25):
     # create the q and rop
-    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5000)
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=4)
     print(q_rop_dict)
     print('times to run each alternative:', n0)
 
@@ -142,7 +141,8 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_
 
             sim_summary_runner = pd.concat([sim_summary_runner, summary_list])
             bar()
-    heat_map_eoq, new_n = create_heatmap_q_rop(sim_summary_runner, n0)
+
+    heat_map_eoq, new_n = create_heatmap_q_rop(sim_summary_runner, len(sim_summary_runner[sim_summary_runner['alt_name'] == 'alt1']))
 
     # run it enough times
     if new_n > n0:
