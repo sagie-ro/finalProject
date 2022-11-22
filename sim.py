@@ -145,7 +145,7 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_
     heat_map_eoq, new_n = create_heatmap_q_rop(sim_summary_runner, len(sim_summary_runner[sim_summary_runner['alt_name'] == 'alt1']))
 
     # run it enough times
-    if new_n > n0:
+    if new_n > len(sim_summary_runner[sim_summary_runner['alt_name'] == 'alt1']):
         create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n, new_n)
     else:
         print(heat_map_eoq)
