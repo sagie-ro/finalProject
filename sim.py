@@ -310,13 +310,15 @@ def create_heatmap_q_rop(summary_q_rop, n):
 
     # calculating confidence interval, with 5 percent
     #todo show n in the summary
-    t_crit = np.abs(t.ppf(0.05 / 2, n))  # todo check that f we have 64 we take here 63 #show it in summary
-    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean'] - heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1) #todo show it in summary
-    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean'] + heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1) #todo show it in summary
+    t_crit = np.abs(t.ppf(0.05 / 2, n))
+    heatmap_q_rop['t_crit'] = t_crit
+    heatmap_q_rop['n_of_t_crit'] = n
+    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean'] - heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1)
+    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean'] + heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1)
     heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
 
     # clac next batch to choose more
-    heatmap_q_rop['half_CI'] = (t_crit * heatmap_q_rop['Revenue_std']) / ((n + 1) ** 0.5) #todo check this
+    '''heatmap_q_rop['half_CI'] = (t_crit * heatmap_q_rop['Revenue_std']) / ((n + 1) ** 0.5) 
     gama = 0.1
     gama_tag = gama / (1 + gama)
     heatmap_q_rop['precision'] = heatmap_q_rop['half_CI'] / heatmap_q_rop['Revenue_mean'] #todo check this as well
@@ -328,8 +330,11 @@ def create_heatmap_q_rop(summary_q_rop, n):
     pd.options.display.float_format = '{:.3f}'.format
     pd.set_option('display.max_columns', None)
     n_more_to_make = int(max(heatmap_q_rop['N_to_make_more']))
-    heatmap_q_rop = heatmap_q_rop[
+        heatmap_q_rop = heatmap_q_rop[
         ['alt_name_', 'q_first', 'ROP_first', 'Revenue_mean', 'Revenue_std', 'CI_min', 'CI_max']]
+        '''
+    n_more_to_make = 0
+
 
     #todo give hilel new run with alternative to show that the excel worked
     return heatmap_q_rop, n_more_to_make
