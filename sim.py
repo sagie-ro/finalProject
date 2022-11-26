@@ -149,8 +149,8 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_
         create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n, new_n)
     else:
         print(heat_map_eoq)
-        sim_summary_runner.to_csv("sum_runner5000.csv")
-        heat_map_eoq.to_csv("sum_heatmap.csv", index=False)
+        sim_summary_runner.to_csv(f"sum_runner_{datetime.now()}.csv")
+        heat_map_eoq.to_csv(f"sum_heatmap_{datetime.now()}.csv", index=False)
 
 
 def create_t_paired(heat_map_eoq):
