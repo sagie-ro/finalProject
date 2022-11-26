@@ -309,14 +309,17 @@ def create_heatmap_q_rop(summary_q_rop, n):
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
 
     # calculating confidence interval, with 5 percent
-    t_crit = np.abs(t.ppf(0.05 / 2, n))  # todo check it
-    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean'] - heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1)
-    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean'] + heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1)
+    #todo show n in the summary
+    t_crit = np.abs(t.ppf(0.05 / 2, n))  # todo check that f we have 64 we take here 63 #show it in summary
+    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean'] - heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1) #todo show it in summary
+    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean'] + heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n + 1) #todo show it in summary
     heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
-    heatmap_q_rop['half_CI'] = (t_crit * heatmap_q_rop['Revenue_std']) / ((n + 1) ** 0.5)
+
+    # clac next batch to choose more
+    heatmap_q_rop['half_CI'] = (t_crit * heatmap_q_rop['Revenue_std']) / ((n + 1) ** 0.5) #todo check this
     gama = 0.1
     gama_tag = gama / (1 + gama)
-    heatmap_q_rop['precision'] = heatmap_q_rop['half_CI'] / heatmap_q_rop['Revenue_mean']
+    heatmap_q_rop['precision'] = heatmap_q_rop['half_CI'] / heatmap_q_rop['Revenue_mean'] #todo check this as well
     heatmap_q_rop['N_to_make'] = (n + 1) * ((heatmap_q_rop['precision'] / gama_tag) ** 2)
     heatmap_q_rop['N_to_make'] = heatmap_q_rop['N_to_make'].apply(np.ceil)
     heatmap_q_rop['N_to_make_more'] = heatmap_q_rop['N_to_make'] - n
@@ -327,6 +330,8 @@ def create_heatmap_q_rop(summary_q_rop, n):
     n_more_to_make = int(max(heatmap_q_rop['N_to_make_more']))
     heatmap_q_rop = heatmap_q_rop[
         ['alt_name_', 'q_first', 'ROP_first', 'Revenue_mean', 'Revenue_std', 'CI_min', 'CI_max']]
+
+    #todo give hilel new run with alternative to show that the excel worked
     return heatmap_q_rop, n_more_to_make
 
 
