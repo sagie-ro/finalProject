@@ -50,7 +50,7 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     count = 2
     increment_q = 1  # as default
     increment_rop = 1  # as default
-    increment_ratio = 0.1
+    increment_ratio = 0.5
 
     # normal
     z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
@@ -63,11 +63,11 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     print(f"Simulation increment for q is set to: {increment_q}")
     print(f"Simulation increment for rop is set to: {increment_rop}")
 
-    q = q - (increment_q * (int(math.sqrt(n))/2))
+    q = max(1, q - (increment_q * (int(math.sqrt(n))/2)))
 
     for i in range(1 , n):
         z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
-        rop -= increment_rop * ( math.sqrt(n)/2 )
+        rop = max(0, rop - increment_rop * ( math.sqrt(n)/2 ))
         for j in range(1,int(math.sqrt(n))+1):
             heuristics[f'alt{count}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
             rop+=increment_rop
