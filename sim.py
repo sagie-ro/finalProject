@@ -111,7 +111,7 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
 
 def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n=[], n0=25):
     # create the q and rop
-    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=4)
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5)
     print(q_rop_dict)
     print('times to run each alternative:', n0)
 
@@ -145,12 +145,16 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_
     heat_map_eoq, new_n = create_heatmap_q_rop(sim_summary_runner, len(sim_summary_runner[sim_summary_runner['alt_name'] == 'alt1']))
 
     # run it enough times
-    if new_n > len(sim_summary_runner[sim_summary_runner['alt_name'] == 'alt1']):
+    if (new_n > 0):
         create_sim_loop(paramdict, dist_func, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n, new_n)
     else:
+
         print(heat_map_eoq)
-        sim_summary_runner.to_csv("sum_runner5000.csv")
-        heat_map_eoq.to_csv("sum_heatmap.csv", index=False)
+        nameRunner = "sum_runner_.csv"
+        nameHeatmap = "sum_heatmap_.csv"
+
+        sim_summary_runner.to_csv(nameRunner)
+        heat_map_eoq.to_csv(nameHeatmap, index=False)
 
 
 def create_t_paired(heat_map_eoq):
@@ -302,9 +306,10 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
 
 def create_heatmap_q_rop(summary_q_rop, n):
     # creating the heatmap table
-    heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue', 'alt_name']]
+    print(summary_q_rop.columns)
+    heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue', 'alt_name','how many orders','Shortage Percent','Y(q)', 'G(q)']]
     heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg(
-        {'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std']})
+        {'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std'], 'how many orders':'mean','Shortage Percent':'mean','Y(q)':'mean', 'G(q)':'mean' })
     heatmap_q_rop.columns = heatmap_q_rop.columns.to_flat_index()
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
 
@@ -312,28 +317,26 @@ def create_heatmap_q_rop(summary_q_rop, n):
     #todo show n in the summary
     t_crit = np.abs(t.ppf(0.05 / 2, n-1))
     heatmap_q_rop['t_crit'] = t_crit
-    heatmap_q_rop['n_of_t_crit'] = n
-    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean'] - heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n)
-    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean'] + heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n)
+    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean'] - heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n )
+    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean'] + heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n )
+    heatmap_q_rop['half_CI'] = heatmap_q_rop['CI_max'] - heatmap_q_rop['CI_min']
+    #  heatmap_q_rop['Precision'] = heatmap_q_rop['half_CI']/heatmap_q_rop['Revenue_mean']
     heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
 
     # clac next batch to choose more
-    '''heatmap_q_rop['half_CI'] = (t_crit * heatmap_q_rop['Revenue_std']) / ((n) ** 0.5) 
+
     gama = 0.1
     gama_tag = gama / (1 + gama)
     heatmap_q_rop['precision'] = heatmap_q_rop['half_CI'] / heatmap_q_rop['Revenue_mean'] #todo check this as well
-    heatmap_q_rop['N_to_make'] = (n) * ((heatmap_q_rop['precision'] / gama_tag) ** 2)
-    heatmap_q_rop['N_to_make'] = heatmap_q_rop['N_to_make'].apply(np.ceil)
-    heatmap_q_rop['N_to_make_more'] = heatmap_q_rop['N_to_make'] - n
+    heatmap_q_rop['total_N_needed'] = (n) * ((heatmap_q_rop['precision'] / gama_tag) ** 2)
+    heatmap_q_rop['total_N_needed'] = heatmap_q_rop['total_N_needed'].apply(np.ceil)
+    heatmap_q_rop['Current_N'] = n
+    heatmap_q_rop['N_to_make_more'] = heatmap_q_rop['total_N_needed'] - heatmap_q_rop['Current_N']
     heatmap_q_rop.loc[heatmap_q_rop['N_to_make_more'] < 0, 'N_to_make_more'] = 0
     pd.set_option('display.float_format', str)
     pd.options.display.float_format = '{:.3f}'.format
     pd.set_option('display.max_columns', None)
     n_more_to_make = int(max(heatmap_q_rop['N_to_make_more']))
-        heatmap_q_rop = heatmap_q_rop[
-        ['alt_name_', 'q_first', 'ROP_first', 'Revenue_mean', 'Revenue_std', 'CI_min', 'CI_max']]
-        '''
-    n_more_to_make = 0
 
 
     #todo give hilel new run with alternative to show that the excel worked
@@ -352,6 +355,11 @@ if __name__ == '__main__':
         "max": 109.58,
         "min": 109.58
     }
+    print(type(str(datetime.now())))
+    nameRunner = "sum_runner_" + str(datetime.now().today()) + ".csv"
+    nameHeatmap = "sum_heatmap_" + str(datetime.now()) + ".csv"
+    print(nameRunner , type(nameRunner))
+
     create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=20, dist_func="normal", q_list=[0],
                for_loop_sim=True)
 
