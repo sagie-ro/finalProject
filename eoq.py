@@ -48,7 +48,9 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     # init
     heuristics = {}
     count = 2
-    increment = 1
+    increment_q = 1  # as default
+    increment_rop = 1  # as default
+    increment_ratio = 0.1
 
     # normal
     z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
@@ -56,18 +58,23 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     q = calc_eoq_1(k, baseMean, h, min_q)
     heuristics[f'alt{1}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
 
-    q = q - (increment * (int(math.sqrt(n))/2))
+    increment_q = math.ceil(q * increment_ratio) # relative increment
+    increment_rop = math.ceil(rop * increment_ratio)  # relative increment
+    print(f"Simulation increment for q is set to: {increment_q}")
+    print(f"Simulation increment for rop is set to: {increment_rop}")
+
+    q = q - (increment_q * (int(math.sqrt(n))/2))
 
     for i in range(1 , n):
         z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
-        rop -= increment * ( math.sqrt(n)/2 )
+        rop -= increment_rop * ( math.sqrt(n)/2 )
         for j in range(1,int(math.sqrt(n))+1):
             heuristics[f'alt{count}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
-            rop+=increment
+            rop+=increment_rop
             count+=1
             if count>n: break
         heuristics[f'alt{count}'] = {'q': int(q), 'rop': int(rop), 'b': int(b)}
-        q += increment
+        q += increment_q
         count +=1
         if count > n: break
     return heuristics
