@@ -50,7 +50,7 @@ def create_heuristic_q_rop(alpha, lt, sigma, baseMean, h, k, n=2):
     count = 2
     increment_q = 1  # as default
     increment_rop = 1  # as default
-    increment_ratio = 0.5
+    increment_ratio = 0.05
 
     # normal
     z, b, rop = norm_calc_rop(alpha, lt, sigma, baseMean)
