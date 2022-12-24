@@ -111,7 +111,7 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
 
 def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n=[], n0=25):
     # create the q and rop
-    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5)
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5000)
     print(q_rop_dict)
     print('times to run each alternative:', n0)
 
@@ -150,8 +150,8 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_
     else:
 
         print(heat_map_eoq)
-        nameRunner = "sum_runner_.csv"
-        nameHeatmap = "sum_heatmap_.csv"
+        nameRunner = "sum_runner_5000_135k.csv"
+        nameHeatmap = "sum_heatmap_5000_135k.csv"
 
         sim_summary_runner.to_csv(nameRunner)
         heat_map_eoq.to_csv(nameHeatmap, index=False)
@@ -360,7 +360,7 @@ if __name__ == '__main__':
     nameHeatmap = "sum_heatmap_" + str(datetime.now()) + ".csv"
     print(nameRunner , type(nameRunner))
 
-    create_sim(paramdict=paramdict, lt=1, k=5000, c=10, interest=0.1, alpha=0.95, p=20, dist_func="normal", q_list=[0],
+    create_sim(paramdict=paramdict, lt=1, k=135, c=10, interest=0.1, alpha=0.95, p=20, dist_func="normal", q_list=[0],
                for_loop_sim=True)
 
     print(f' simulation run time: {datetime.now() - startTime}')
