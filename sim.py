@@ -111,7 +111,7 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
 
 def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n=[], n0=25):
     # create the q and rop
-    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5000)
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5)
     print(q_rop_dict)
     print('times to run each alternative:', n0)
 
@@ -130,12 +130,11 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_
             for n in range(len(demand_by_n)):
                 # demand_arr = cd.create_yearly_demand(paramdict, dist_func) for welch
                 demand_arr = demand_by_n[n]  # t-paired
+                year_simulated = run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
                 if n == 0:
-                    summary_list = run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr, q_to_order)
+                    summary_list = year_simulated
                 else:
-                    summary_list = pd.concat([summary_list,
-                                              run_sim_once_return_sl(lt, k, c, p, h, rop_when_order, b, demand_arr,
-                                                                     q_to_order)])
+                    summary_list = pd.concat([summary_list, year_simulated])
             summary_list.reset_index(drop=True, inplace=True)
             summary_list['alt_name'] = alternitive
 
@@ -280,15 +279,20 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
     sim_df = sim_df.reset_index(drop=True)
     sim_df.index += 1
 
+    #section to cut the lis a day before last new arrive
+    mask = sim_df['days until new supply arrives'] == 1
+    last_index = sim_df[mask].tail(1).index[0]
+    sim_df = sim_df.iloc[:last_index-1]
+
     # create summary as: q, b, Rop, Y(q), G(q), Revenue
     summary_list = [q, b, rop, len(sim_df[sim_df['days until new supply arrives'] == lt]),
                     sim_df['inventory cost'].sum() + sim_df['order cost'].sum(), sim_df['total daily cost'].sum(),
                     sim_df['total daily income'].sum(),
-                    sim_df['shortage'].sum() / sum(demand_arr) * 100
+                    sim_df['shortage'].sum() / sum(demand_arr) * 100, len(sim_df), sim_df['total daily income'].sum()/ len(sim_df)
                     ]
     summary_list = pd.DataFrame(np.array([summary_list]),
                                 columns=['q', 'b', 'ROP', 'how many orders', 'Y(q)', 'G(q)', 'Revenue',
-                                         'Shortage Percent'])
+                                         'Shortage Percent', 'how_many_days_ran', 'Revenue_per_day'])
 
     # create cumsum
     cumsum = pd.DataFrame()
@@ -307,9 +311,9 @@ def sim_runner(demand_arr, q, rop, lt, h, k, c, p, b):
 def create_heatmap_q_rop(summary_q_rop, n):
     # creating the heatmap table
     print(summary_q_rop.columns)
-    heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue', 'alt_name','how many orders','Shortage Percent','Y(q)', 'G(q)']]
+    heatmap_q_rop = summary_q_rop[['q', 'ROP', 'Revenue_per_day', 'alt_name','how many orders','Shortage Percent','Y(q)', 'G(q)']]
     heatmap_q_rop = heatmap_q_rop.groupby(['alt_name'], as_index=False).agg(
-        {'q': 'first', 'ROP': 'first', 'Revenue': ['mean', 'std'], 'how many orders':'mean','Shortage Percent':'mean','Y(q)':'mean', 'G(q)':'mean' })
+        {'q': 'first', 'ROP': 'first', 'Revenue_per_day': ['mean', 'std'], 'how many orders':'mean','Shortage Percent':'mean','Y(q)':'mean', 'G(q)':'mean' })
     heatmap_q_rop.columns = heatmap_q_rop.columns.to_flat_index()
     heatmap_q_rop.columns = ['_'.join(col) for col in heatmap_q_rop.columns.values]
 
@@ -317,8 +321,8 @@ def create_heatmap_q_rop(summary_q_rop, n):
     #todo show n in the summary
     t_crit = np.abs(t.ppf(0.05 / 2, n-1))
     heatmap_q_rop['t_crit'] = t_crit
-    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_mean'] - heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n )
-    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_mean'] + heatmap_q_rop['Revenue_std'] * t_crit / np.sqrt(n )
+    heatmap_q_rop['CI_min'] = heatmap_q_rop['Revenue_per_day_mean'] - heatmap_q_rop['Revenue_per_day_std'] * t_crit / np.sqrt(n )
+    heatmap_q_rop['CI_max'] = heatmap_q_rop['Revenue_per_day_mean'] + heatmap_q_rop['Revenue_per_day_std'] * t_crit / np.sqrt(n )
     heatmap_q_rop['half_CI'] = heatmap_q_rop['CI_max'] - heatmap_q_rop['CI_min']
     #  heatmap_q_rop['Precision'] = heatmap_q_rop['half_CI']/heatmap_q_rop['Revenue_mean']
     heatmap_q_rop = heatmap_q_rop.sort_values(by='CI_max', ascending=False)
@@ -327,7 +331,7 @@ def create_heatmap_q_rop(summary_q_rop, n):
 
     gama = 0.1
     gama_tag = gama / (1 + gama)
-    heatmap_q_rop['precision'] = heatmap_q_rop['half_CI'] / heatmap_q_rop['Revenue_mean'] #todo check this as well
+    heatmap_q_rop['precision'] = heatmap_q_rop['half_CI'] / heatmap_q_rop['Revenue_per_day_mean'] #todo check this as well
     heatmap_q_rop['total_N_needed'] = (n) * ((heatmap_q_rop['precision'] / gama_tag) ** 2)
     heatmap_q_rop['total_N_needed'] = heatmap_q_rop['total_N_needed'].apply(np.ceil)
     heatmap_q_rop['Current_N'] = n
@@ -340,6 +344,7 @@ def create_heatmap_q_rop(summary_q_rop, n):
 
 
     #todo give hilel new run with alternative to show that the excel worked
+    heatmap_q_rop.to_csv('try.csv')
     return heatmap_q_rop, n_more_to_make
 
 

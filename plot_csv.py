@@ -4,13 +4,13 @@ import seaborn as sns
 from mpl_toolkits import mplot3d
 
 def scatter_plot(df,column_name):
-    ax = df.plot.scatter(x="q_first", y="ROP_first", c=column_name, title='q vs rop on Revenue mean',colormap='RdYlGn',s=120)  # _r in color map make the color reverse, s is for size revenue_dataFrame["CI_min"] * 0.005
+    ax = df.plot.scatter(x="q_first", y="ROP_first", c=column_name, title='q vs rop on Revenue per day mean',colormap='RdYlGn',s=120)  # _r in color map make the color reverse, s is for size revenue_dataFrame["CI_min"] * 0.005
     ax.ticklabel_format(useOffset=False)
     plt.show()
 
 def hexplot(df,column_name):
     ax = df.plot.hexbin(x="q_first", y="ROP_first", C=column_name, gridsize=20, cmap="RdYlGn",
-                                       title='q vs rop on Revenue mean')
+                                       title='q vs rop on Revenue per day mean')
     ax.ticklabel_format(useOffset=False)
     plt.show()
 
@@ -37,7 +37,7 @@ def plot3d(df,column_name):
 if __name__ == '__main__':
     #path = "sum_heatmap_csv.csv"
     path = "sum_heatmap_5000_135k.csv"
-    column_name = "Revenue_mean"
+    column_name = "Revenue_per_day_mean"
     #column_name = "Revenue_mean_calculated"
     revenue_dataFrame = pd.read_csv(path) #columns are 'alt_name_', 'q_first', 'ROP_first', column_name, 'Revenue_std', 'CI_min', 'CI_max'
 
