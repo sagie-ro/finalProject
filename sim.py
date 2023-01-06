@@ -111,7 +111,7 @@ def run_sim_once_return_sl(lt, k, c, p, h, rop, b, demand_arr, q_to_order):
 
 def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_summary_runner, demand_by_n=[], n0=25):
     # create the q and rop
-    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5)
+    q_rop_dict = eoq.create_heuristic_q_rop(alpha, lt, paramdict['sigma'], paramdict['mean'], h, k, n=5000)
     print(q_rop_dict)
     print('times to run each alternative:', n0)
 
@@ -149,8 +149,8 @@ def create_sim_loop(paramdict: dict, dist_func: str, lt, k, c, p, h, alpha, sim_
     else:
 
         print(heat_map_eoq)
-        nameRunner = "sum_runner_5000_135k.csv"
-        nameHeatmap = "sum_heatmap_5000_135k.csv"
+        nameRunner = f"sum_runner_Dmean{paramdict.get('mean')}_Dsigma{paramdict.get('sigma')}_alt{len(q_rop_dict)}_lt{lt}_k{k}_c{c}_p{p}_h{h}_alpha{alpha}.csv"
+        nameHeatmap = f"sum_heatmap_Dmean{paramdict.get('mean')}_Dsigma{paramdict.get('sigma')}_alt{len(q_rop_dict)}_lt{lt}_k{k}_c{c}_p{p}_h{h}_alpha{alpha}.csv"
 
         sim_summary_runner.to_csv(nameRunner)
         heat_map_eoq.to_csv(nameHeatmap, index=False)
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     #      q_list=[0], for_loop_sim=25)
     paramdict = {
         "mean": 109.58,
-        "sigma": 23,
+        "sigma": 120,  # was 30 last time, we want to try 120,60,15,0
         "max": 109.58,
         "min": 109.58
     }

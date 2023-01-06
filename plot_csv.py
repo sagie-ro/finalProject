@@ -36,7 +36,8 @@ def plot3d(df,column_name):
 
 if __name__ == '__main__':
     #path = "sum_heatmap_csv.csv"
-    path = "sum_heatmap_5000_135k.csv"
+    #path = "sum_heatmap_5000new.csv"
+    path = "sum_heatmap_Dmean109.58_Dsigma120_alt5001_lt1_k135_c10_p20_h1.0_alpha0.95.csv"
     column_name = "Revenue_per_day_mean"
     #column_name = "Revenue_mean_calculated"
     revenue_dataFrame = pd.read_csv(path) #columns are 'alt_name_', 'q_first', 'ROP_first', column_name, 'Revenue_std', 'CI_min', 'CI_max'
